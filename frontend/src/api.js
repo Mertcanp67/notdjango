@@ -1,5 +1,6 @@
-const API_BASE_URL = "http://127.0.0.1:8000"; // Django API adresiniz
-
+// api.js
+// Adresin sonunda slash (/) olmamasına dikkat edin
+const BASE_URL = "https://notdjango.onrender.com";
 export const apiFetch = async (url, options = {}) => { // url artık /api/notes/ gibi olacak
   const token = localStorage.getItem("authToken");
   const headers = {
@@ -8,7 +9,7 @@ export const apiFetch = async (url, options = {}) => { // url artık /api/notes/
     ...options.headers,
   };
 
-  const res = await fetch(`${API_BASE_URL}${url}`, { ...options, headers });
+  const res = await fetch(`${BASE_URL}${url}`, { ...options, headers });
 
   if (res.status === 401) {
     localStorage.removeItem("authToken");
