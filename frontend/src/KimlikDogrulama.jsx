@@ -57,6 +57,12 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   '& .MuiInputLabel-root.Mui-focused': {
     color: '#6ea8fe',
   },
+  // Etiket küçüldüğünde (yani içine yazı yazıldığında) arkaplan ekleyelim
+  '& .MuiInputLabel-shrink': {
+    background: 'radial-gradient(circle, rgba(10, 25, 41, 1) 60%, transparent 65%)',
+    paddingRight: '4px',
+    paddingLeft: '4px',
+  },
 }));
 
 const StyledToggleButtonGroup = styled(ToggleButtonGroup)(({ theme }) => ({
