@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function NoteStats({ notes, categories, activeFilter, handleFilterClick }) {
+export function NoteStats({ notes, categories = [], activeFilter, handleFilterClick }) {
   return (
     <div style={{ position: 'sticky', top: '20px', alignSelf: 'start' }}>
       <div className="card stat-dashboard" style={{ marginBottom: '20px', padding: '15px' }}>
@@ -15,7 +15,7 @@ export function NoteStats({ notes, categories, activeFilter, handleFilterClick }
 
         <div style={{ marginTop: 10 }}>
           {categories.map(cat => {
-            const notesInCategory = notes.filter(n => n.category?.id === cat.id);
+            const notesInCategory = notes.filter(n => n.category === cat.id);
             const total = notesInCategory.length;
             if (total === 0) return null; // Kategoride not yoksa gösterme
 

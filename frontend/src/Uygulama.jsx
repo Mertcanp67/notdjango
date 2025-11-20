@@ -312,9 +312,8 @@ await sleep(1000);
 
           <NoteStats
             notes={notes}
-            categoryStats={categoryStats}
+            categories={categories}
             activeFilter={activeFilter}
-            filteredNotes={filteredNotes}
             handleFilterClick={handleFilterClick}
           />
 
