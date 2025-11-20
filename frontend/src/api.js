@@ -1,4 +1,7 @@
+
+import axios from 'axios';
 // api.js
+
 // Adresin sonunda slash (/) olmamasına dikkat edin
 const BASE_URL = "https://notdjango.onrender.com";
 export const apiFetch = async (url, options = {}) => { // url artık /api/notes/ gibi olacak
