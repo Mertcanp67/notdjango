@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Button,
@@ -9,7 +9,8 @@ import {
   Box,
   CircularProgress,
   Alert,
-  Link,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
@@ -58,9 +59,64 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   },
 }));
 
-const AuthForm = ({ isLogin, handleLogin, handleRegister, authForm, handleInputChange, loading, itemVariants, formVariants }) => (
+const StyledToggleButtonGroup = styled(ToggleButtonGroup)(({ theme }) => ({
+  marginBottom: theme.spacing(3),
+  background: 'rgba(110, 168, 254, 0.1)',
+  border: '1px solid rgba(110, 168, 254, 0.2)',
+  borderRadius: '12px',
+}));
+
+const StyledToggleButton = styled(ToggleButton)(({ theme }) => ({
+  flex: 1,
+  border: 'none',
+  color: 'rgba(230, 238, 252, 0.6)',
+  fontWeight: 'bold',
+  borderRadius: '12px !important',
+  '&.Mui-selected': {
+    color: '#ffffff',
+    background: 'rgba(110, 168, 254, 0.3)',
+  },
+  '&:hover': {
+    background: 'rgba(110, 168, 254, 0.2)',
+  },
+}));
+
+export function Auth({ onLogin, onRegister, loading, error, setError }) {
+  const [authMode, setAuthMode] = useState('login');
+  const [authForm, setAuthForm] = useState({
+    username: '',
+    password: '',
+    password2: '',
+    email: '',
+  });
+
+  const isLogin = useMemo(() => authMode === 'login', [authMode]);
+
+  const handleInputChange = (e) => {
+    setAuthForm({ ...authForm, [e.target.name]: e.target.value });
+  };
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    onLogin(authForm.username, authForm.password);
+  };
+
+  const handleRegister = (e) => {
+    e.preventDefault();
+    onRegister(authForm.username, authForm.password, authForm.password2, authForm.email);
+  };
+
+  const handleModeChange = (event, newMode) => {
+    if (newMode !== null) {
+      setAuthMode(newMode);
+    }
+    setError('');
+    setAuthForm({ username: '', password: '', password2: '', email: '' });
+  };
+
+  const renderForm = () => (
     <motion.div
-      key={isLogin ? 'login' : 'register'}
+      key={authMode}
       variants={formVariants}
       initial="hidden"
       animate="visible"
@@ -68,11 +124,6 @@ const AuthForm = ({ isLogin, handleLogin, handleRegister, authForm, handleInputC
       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
     >
       <form onSubmit={isLogin ? handleLogin : handleRegister}>
-        <motion.div variants={itemVariants}>
-          <Typography variant="h4" mb={3} sx={{ fontWeight: 'bold', color: 'white', textAlign: 'center' }}>
-            {isLogin ? 'Giriş Yap' : 'Hesap Oluştur'}
-          </Typography>
-        </motion.div>
         <motion.div variants={itemVariants}>
           <StyledTextField
             label="Kullanıcı Adı"
@@ -132,11 +183,19 @@ const AuthForm = ({ isLogin, handleLogin, handleRegister, authForm, handleInputC
           <Button
             type="submit"
             variant="contained"
-            color={isLogin ? 'primary' : 'secondary'}
             fullWidth
             disabled={loading}
-            sx={{ mt: 2, py: 1.5, borderRadius: '8px', fontWeight: 'bold',
-                 background: isLogin ? 'linear-gradient(135deg,#3d82ff, #6ea8fe)' : 'linear-gradient(135deg,#9c27b0, #ce93d8)',
+            sx={{
+              mt: 2,
+              py: 1.5,
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              background: isLogin
+                ? 'linear-gradient(135deg,#3d82ff, #6ea8fe)'
+                : 'linear-gradient(135deg,#9c27b0, #ce93d8)',
+              '&:hover': {
+                opacity: 0.9,
+              },
             }}
           >
             {loading ? <CircularProgress size={24} color="inherit" /> : (isLogin ? 'Giriş Yap' : 'Kayıt Ol')}
@@ -145,35 +204,6 @@ const AuthForm = ({ isLogin, handleLogin, handleRegister, authForm, handleInputC
       </form>
     </motion.div>
   );
-
-export function Auth({ onLogin, onRegister, loading, error, setError }) {
-  const [authMode, setAuthMode] = useState('login');
-  const [authForm, setAuthForm] = useState({
-    username: '',
-    password: '',
-    password2: '',
-    email: '',
-  });
-
-  const handleInputChange = (e) => {
-    setAuthForm({ ...authForm, [e.target.name]: e.target.value });
-  };
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    onLogin(authForm.username, authForm.password);
-  };
-
-  const handleRegister = (e) => {
-    e.preventDefault();
-    onRegister(authForm.username, authForm.password, authForm.password2, authForm.email);
-  };
-
-  const switchMode = () => {
-    setAuthMode((prevMode) => (prevMode === 'login' ? 'register' : 'login'));
-    setError('');
-    setAuthForm({ username: '', password: '', password2: '', email: '' });
-  };
 
   return (
     <Box
@@ -197,8 +227,18 @@ export function Auth({ onLogin, onRegister, loading, error, setError }) {
 
       <GlassmorphicCard>
         <CardContent sx={{ p: 4 }}>
+          <StyledToggleButtonGroup
+            value={authMode}
+            exclusive
+            onChange={handleModeChange}
+            aria-label="auth mode"
+            fullWidth
+          >
+            <StyledToggleButton value="login" aria-label="login">Giriş Yap</StyledToggleButton>
+            <StyledToggleButton value="register" aria-label="register">Kayıt Ol</StyledToggleButton>
+          </StyledToggleButtonGroup>
           <AnimatePresence mode="wait">
-            {authMode === 'login' ? <AuthForm isLogin handleLogin={handleLogin} handleInputChange={handleInputChange} authForm={authForm} loading={loading} itemVariants={itemVariants} formVariants={formVariants} /> : <AuthForm isLogin={false} handleRegister={handleRegister} handleInputChange={handleInputChange} authForm={authForm} loading={loading} itemVariants={itemVariants} formVariants={formVariants} />}
+            {renderForm()}
           </AnimatePresence>
 
           {error && (
@@ -208,18 +248,6 @@ export function Auth({ onLogin, onRegister, loading, error, setError }) {
               </Alert>
             </motion.div>
           )}
-
-          <Box sx={{ mt: 3, textAlign: 'center' }}>
-            <Link
-              component="button"
-              variant="body2"
-              onClick={switchMode}
-              disabled={loading}
-              sx={{ color: 'rgba(255, 255, 255, 0.7)', '&:hover': { color: 'white' } }}
-            >
-              {authMode === 'login' ? 'Hesabın yok mu? Kayıt ol' : 'Hesabın var mı? Giriş yap'}
-            </Link>
-          </Box>
         </CardContent>
       </GlassmorphicCard>
     </Box>
