@@ -1,6 +1,5 @@
 import React from 'react';
-import { CATEGORY_CHOICES } from "./sabitler.jsx"; 
-export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, isClosing }) {
+export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, isClosing, categories }) {
   if (!isOpen) return null;
 
   return (
@@ -26,13 +25,14 @@ export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, i
 
           <select
             className="input"
-            value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            value={form.category_id || ""}
+            onChange={(e) => setForm({ ...form, category_id: e.target.value ? parseInt(e.target.value) : null })}
             style={{ marginTop: '10px', padding: '12px 15px', fontSize: '1.05em' }}
           >
-            {CATEGORY_CHOICES.map(cat => (
-              <option key={cat.value} value={cat.value}>
-                {cat.label}
+            <option value="">Kategori Yok</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
               </option>
             ))}
           </select>
@@ -92,7 +92,7 @@ export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, i
   );
 }
 
-export function EditNoteModal({ isOpen, onClose, note, setNote, onSave, loading, isClosing }) {
+export function EditNoteModal({ isOpen, onClose, note, setNote, onSave, loading, isClosing, categories }) {
   if (!isOpen || !note) return null;
 
   return (
@@ -118,13 +118,14 @@ export function EditNoteModal({ isOpen, onClose, note, setNote, onSave, loading,
 
           <select
             className="input"
-            value={note.category}
-            onChange={(e) => setNote({ ...note, category: e.target.value })}
+            value={note.category?.id || ""}
+            onChange={(e) => setNote({ ...note, category_id: e.target.value ? parseInt(e.target.value) : null, category: categories.find(c => c.id === parseInt(e.target.value)) })}
             style={{ marginTop: '10px', padding: '12px 15px', fontSize: '1.05em' }}
           >
-            {CATEGORY_CHOICES.map(cat => (
-              <option key={cat.value} value={cat.value}>
-                {cat.label}
+            <option value="">Kategori Yok</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
               </option>
             ))}
           </select>

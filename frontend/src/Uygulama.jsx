@@ -6,6 +6,10 @@ import {
   updateNote,
   deleteNote,
   authFetch,
+  listCategories, // Eklendi
+  createCategory, // Eklendi
+  updateCategory, // Eklendi
+  deleteCategory, // Eklendi
 } from "./api.js";
 import "./stil.css";
 import { useDebounce } from "./hooks";
@@ -22,6 +26,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function Uygulama() {
   const [notes, setNotes] = useState([]);
+  const [categories, setCategories] = useState([]); // Eklendi
   const [form, setForm] = useState({ title: "", content: "", is_private: false, category: 'GEN' });
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -57,11 +62,13 @@ export default function Uygulama() {
     try {
       setLoading(true);
       const data = await listNotes(term);
+      const categoriesData = await listCategories(); // Kategorileri yükle
       const normalized = data.map((n) => ({
         ...n,
         owner: n.owner ?? "Anonim",
       }));
       setNotes(normalized);
+      setCategories(categoriesData); // Kategorileri state'e ata
     } catch (e) {
       setError(e.message);
     } finally {

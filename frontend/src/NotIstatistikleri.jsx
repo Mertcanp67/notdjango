@@ -1,7 +1,6 @@
 import React from 'react';
-import { CATEGORY_CHOICES, CategoryMap } from './sabitler.jsx';
 
-export function NoteStats({ notes, categoryStats, activeFilter, filteredNotes, handleFilterClick }) {
+export function NoteStats({ notes, categories, activeFilter, handleFilterClick }) {
   return (
     <div style={{ position: 'sticky', top: '20px', alignSelf: 'start' }}>
       <div className="card stat-dashboard" style={{ marginBottom: '20px', padding: '15px' }}>
@@ -15,33 +14,37 @@ export function NoteStats({ notes, categoryStats, activeFilter, filteredNotes, h
         </div>
 
         <div style={{ marginTop: 10 }}>
-          {CATEGORY_CHOICES.map(cat => {
-            const stats = categoryStats[cat.value] || { total: 0, private: 0, public: 0 };
-            const categoryData = CategoryMap[cat.value] || CategoryMap.GEN;
-            const isSelected = activeFilter === cat.value;
-            const hasNotesInCurrentFilter = activeFilter ? filteredNotes.some(n => n.category === cat.value) : stats.total > 0;
+          {categories.map(cat => {
+            const notesInCategory = notes.filter(n => n.category?.id === cat.id);
+            const total = notesInCategory.length;
+            if (total === 0) return null; // Kategoride not yoksa gösterme
 
-            const itemClass = `stat-item ${isSelected ? 'selected' : ''} ${!hasNotesInCurrentFilter ? 'filtered-out' : ''}`;
+            const publicCount = notesInCategory.filter(n => !n.is_private).length;
+            const privateCount = total - publicCount;
+
+            const isSelected = activeFilter === cat.id;
+            const itemClass = `stat-item ${isSelected ? 'selected' : ''}`;
 
             return (
               <div
-                key={cat.value}
+                key={cat.id}
                 className={itemClass}
-                onClick={stats.total > 0 ? () => handleFilterClick(cat.value) : null}
+                onClick={() => handleFilterClick(cat.id)}
                 style={{ marginBottom: 8, padding: '8px 5px', borderRadius: '5px' }}
               >
-                <div style={{ fontWeight: 'bold', color: categoryData.color, flexGrow: 1, fontSize: '0.95em' }}>
-                  {categoryData.label}
+                <div style={{ fontWeight: 'bold', color: cat.color, flexGrow: 1, fontSize: '0.95em' }}>
+                  {cat.name.toUpperCase()}
                 </div>
                 <div style={{ fontSize: '0.9em', color: 'var(--text)' }}>
-                  ({stats.public} A {stats.private} G)
+                  ({publicCount} A {privateCount} G)
                 </div>
                 <div style={{ fontSize: '1em', fontWeight: 'bold', marginLeft: 15 }}>
-                  {stats.total}
+                  {total}
                 </div>
               </div>
             );
           })}
+          {/* TODO: Kategori Yönetim Butonu buraya eklenebilir */}
         </div>
       </div>
     </div>

@@ -11,7 +11,7 @@ class NoteViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated] 
     
     filter_backends = [filters.SearchFilter]
-    search_fields = ["title", "content", "owner__username"]
+    search_fields = ["title", "content", "owner__username", "tags__name"]
 
     def get_permissions(self):
         """

@@ -55,3 +55,8 @@ export const updateNote = (id, payload) => apiFetch(`/api/notes/${id}/`, { metho
 export const deleteNote = (id) => apiFetch(`/api/notes/${id}/`, { method: "DELETE" });
 export const loginUser = (payload) => authFetch("/api/auth/login/", payload);
 export const registerUser = (payload) => authFetch("/api/auth/registration/", payload);
+export const listCategories = () => apiFetch("/api/categories/");
+export const createCategory = (payload) =>
+  apiFetch("/api/categories/", { method: "POST", body: JSON.stringify(payload) });
+export const updateCategory = (id, payload) =>
+  apiFetch(`/api/categories/${id}/`, { method: "PATCH", body: JSON.stringify(payload) });
