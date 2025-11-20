@@ -144,3 +144,5 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage" 
+
+WHITENOISE_ROOT = BASE_DIR.parent / 'frontend' / 'dist'
