@@ -330,7 +330,7 @@ await sleep(1000);
               onStartEdit={handleStartEdit}
               onDelete={onDelete}
               currentUser={currentUser}
-              isAdmin={isAdmin}
+              isAdmin={isAdmin} 
             />
           </div>
 
