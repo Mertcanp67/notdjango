@@ -9,7 +9,7 @@ export const apiFetch = async (url, options = {}) => { // url artık /api/notes/
     ...options.headers,
   };
 
-  const res = await fetch(`${BASE_URL}${url}`, { ...options, headers });
+  const res = await fetch(`${API_BASE_URL}${url}`, { ...options, headers });
 
   if (res.status === 401) {
     localStorage.removeItem("authToken");
