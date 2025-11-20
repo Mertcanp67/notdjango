@@ -1,10 +1,14 @@
 from pathlib import Path
 import os
+import dj_database_url
+
+
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-DEV-ONLY-CHANGE-ME"
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -69,8 +73,16 @@ DATABASES = {
         'PASSWORD': '123456', 
         'HOST': 'localhost',      
         'PORT': '',                  
-    }
+    }   
 }
+
+database_url = os.environ.get("DATABASE_URL")
+if database_url:
+    DATABASES["default"]=dj_database_url.parse(
+        database_url,
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 
 AUTH_PASSWORD_VALIDATORS = []
 
@@ -128,4 +140,4 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage" 
