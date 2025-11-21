@@ -350,6 +350,7 @@ await sleep(1000);
           onAdd={onAdd} 
           loading={loading} 
           isClosing={isClosingAddModal}
+          categories={categories}
         />
         <EditNoteModal 
           isOpen={isEditModalOpen} 
