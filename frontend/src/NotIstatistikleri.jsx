@@ -2,7 +2,7 @@ import React from 'react';
 
 export function NoteStats({ notes, categories = [], activeFilter, handleFilterClick }) {
   return (
-    <div style={{ position: 'sticky', top: '20px', alignSelf: 'start' }}>
+    <div style={{ position: 'sticky', top: '20px', alignSelf: 'start', zIndex: 1 }}>
       <div className="card stat-dashboard" style={{ marginBottom: '20px', padding: '15px' }}>
         <h3 style={{ margin: '0 0 10px', color: 'var(--primary)', borderBottom: '1px solid var(--muted)', paddingBottom: 5, fontSize: '1.2em' }}>
           📊 Not İstatistikleri
