@@ -358,7 +358,9 @@ await sleep(1000);
           note={editingNote} setNote={setEditingNote} 
           onSave={handleSaveAndClose} 
           loading={loading} 
-          isClosing={isClosingEditModal} />
+          isClosing={isClosingEditModal}
+          categories={categories}
+        />
       </div>
     </>
   );

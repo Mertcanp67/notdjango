@@ -3,8 +3,8 @@ from rest_framework import viewsets, filters, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.db.models import Q 
-from .models import Note, CATEGORY_CHOICES
-from .serializers import NoteSerializer
+from .models import Note, Category
+from .serializers import NoteSerializer, CategorySerializer
 from .permissions import IsOwnerOrReadOnly
 
 
@@ -39,13 +39,15 @@ class NoteViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
-class CategoryListView(APIView):
+class CategoryViewSet(viewsets.ModelViewSet):
     """
-    Note modelindeki sabit kategori seçeneklerini listeler.
-    Frontend'in beklediği {id, name} formatında bir liste döndürür.
+    Kullanıcının kendi kategorilerini yönetmesi için API endpoint'i.
     """
-    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = CategorySerializer
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
 
-    def get(self, request, format=None):
-        categories = [{"id": code, "name": name} for code, name in CATEGORY_CHOICES]
-        return Response(categories)
+    def get_queryset(self):
+        return Category.objects.filter(owner=self.request.user).order_by('name')
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)

@@ -3,10 +3,11 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from django.views.generic import TemplateView
-from notes.views import NoteViewSet, CategoryListView
+from notes.views import NoteViewSet, CategoryViewSet
 
 router = DefaultRouter()
 router.register("notes", NoteViewSet, basename="note")
+router.register("categories", CategoryViewSet, basename="category")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -17,8 +18,6 @@ urlpatterns = [
 
     path("api/", include(router.urls)),
 
-    path("api/categories/", CategoryListView.as_view(), name="category-list"),
-    
     path("", TemplateView.as_view(template_name="index.html"))
 
 ]

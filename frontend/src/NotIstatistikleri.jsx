@@ -15,7 +15,7 @@ export function NoteStats({ notes, categories = [], activeFilter, handleFilterCl
 
         <div style={{ marginTop: 10 }}>
           {categories.map(cat => {
-            const notesInCategory = notes.filter(n => n.category === cat.id);
+            const notesInCategory = notes.filter(n => n.category?.id === cat.id);
             const total = notesInCategory.length;
             if (total === 0) return null; // Kategoride not yoksa gösterme
 
