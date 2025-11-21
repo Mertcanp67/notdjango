@@ -1,46 +1,44 @@
 from rest_framework import serializers
-from dj_rest_auth.serializers import TokenSerializer as RestAuthTokenSerializer
 from taggit.serializers import TagListSerializerField, TaggitSerializer
-from .models import Note
-from django.contrib.auth import get_user_model
+from .models import Note, Category
 
-# Django'nun kullandığı aktif kullanıcı modelini alıyoruz
-User = get_user_model() 
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'color']
+        read_only_fields = ['owner']
 
-# =========================================================================
-# 1. CustomTokenSerializer (Admin Bilgilerini API Token'ına Ekler)
-# =========================================================================
-
-class CustomTokenSerializer(RestAuthTokenSerializer):
-    """
-    Kullanıcı giriş yaptığında, dönen token'a is_staff ve username alanlarını ekler.
-    """
-    is_staff = serializers.BooleanField(source="user.is_staff", read_only=True)
-    username = serializers.CharField(source="user.username", read_only=True)
-
-    class Meta(RestAuthTokenSerializer.Meta):
-        fields = RestAuthTokenSerializer.Meta.fields + ('is_staff', 'username',)
-
-
-# =========================================================================
-# 2. NoteSerializer (Taggit ve API için Güncellenmiş)
-# =========================================================================
 
 class NoteSerializer(TaggitSerializer, serializers.ModelSerializer):
-    """
-    Note modelini serileştirir. TaggitSerializer'ı miras alarak etiketleri (tags)
-    doğru formatta (liste olarak) alır ve gönderir.
-    """
-    # owner alanını ID yerine username olarak gösterir
     owner = serializers.CharField(source="owner.username", read_only=True)
-    
-    # tags alanını TagListSerializerField ile etiket listesi olarak serileştirir
     tags = TagListSerializerField()
+    category = CategorySerializer(read_only=True)
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), source='category', write_only=True, required=False, allow_null=True
+    )
 
     class Meta:
         model = Note
-        # 'tags' alanını ekledik
-        fields = ["id", "title", "content", "created_at", "updated_at", "owner", "is_private", "category", "tags"]
-        
-        # Sadece bu alanlar kullanıcı tarafından güncellenemez
-        read_only_fields = ["id", "created_at", "updated_at", "owner"]
+        fields = [
+            "id",
+            "title",
+            "content",
+            "created_at",
+            "owner",
+            "is_private",
+            "category",
+            "category_id",
+            "tags",
+        ]
+        extra_kwargs = {
+            'id': {'read_only': True},
+            'created_at': {'read_only': True},
+        }
+
+    def validate_category_id(self, value):
+        """
+        Kullanıcının sadece kendi kategorisini seçebilmesini sağlar.
+        """
+        if value and value.owner != self.context['request'].user:
+            raise serializers.ValidationError("Bu kategoriye not ekleme yetkiniz yok.")
+        return value
