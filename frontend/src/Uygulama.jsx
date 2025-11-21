@@ -341,24 +341,24 @@ await sleep(1000);
           </div>
 
         </div>
-      </div>
 
-      <AddNoteModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => handleCloseAddModal(false)} 
-        form={form} 
-        setForm={setForm} 
-        onAdd={onAdd} 
-        loading={loading} 
-        isClosing={isClosingAddModal}
-      />
-      <EditNoteModal 
-        isOpen={isEditModalOpen} 
-        onClose={handleCloseEditModal} 
-        note={editingNote} setNote={setEditingNote} 
-        onSave={handleSaveAndClose} 
-        loading={loading} 
-        isClosing={isClosingEditModal} />
+        <AddNoteModal 
+          isOpen={isAddModalOpen} 
+          onClose={() => handleCloseAddModal(false)} 
+          form={form} 
+          setForm={setForm} 
+          onAdd={onAdd} 
+          loading={loading} 
+          isClosing={isClosingAddModal}
+        />
+        <EditNoteModal 
+          isOpen={isEditModalOpen} 
+          onClose={handleCloseEditModal} 
+          note={editingNote} setNote={setEditingNote} 
+          onSave={handleSaveAndClose} 
+          loading={loading} 
+          isClosing={isClosingEditModal} />
+      </div>
     </>
   );
 }
