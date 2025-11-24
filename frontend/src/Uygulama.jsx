@@ -6,19 +6,15 @@ import {
   updateNote,
   deleteNote,
   authFetch,
-  listCategories, // Eklendi
-  createCategory, // Eklendi
-  updateCategory, // Eklendi
-  deleteCategory, // Eklendi
 } from "./api.js";
 import "./stil.css";
 import { useDebounce } from "./hooks";
 import { Auth } from "./KimlikDogrulama.jsx";
 import { Header } from "./Baslik.jsx";
-import { NoteStats } from "./NotIstatistikleri.jsx";
 import { Toolbar } from "./AracCubugu.jsx";
 import { NoteList } from './NotListesi.jsx';
 import { AddNoteModal, EditNoteModal } from './Modallar.jsx';
+import EtiketBulutu from "./EtiketBulutu.jsx";
 
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -26,8 +22,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function Uygulama() {
   const [notes, setNotes] = useState([]);
-  const [categories, setCategories] = useState([]); // Eklendi
-  const [form, setForm] = useState({ title: "", content: "", is_private: false, tags: '' });
+  const [form, setForm] = useState({ title: "", content: "", is_private: false, tags: [] });
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -38,8 +33,7 @@ export default function Uygulama() {
   const [editingNote, setEditingNote] = useState(null);
   const [isClosingAddModal, setIsClosingAddModal] = useState(false);
   const [isClosingEditModal, setIsClosingEditModal] = useState(false);
-
-  const [activeFilter, setActiveFilter] = useState(null);
+  const [selectedTag, setSelectedTag] = useState(null);
 
   const [token, setToken] = useState(localStorage.getItem("authToken"));
   const [currentUser, setCurrentUser] = useState(
@@ -62,13 +56,11 @@ export default function Uygulama() {
     try {
       setLoading(true);
       const data = await listNotes(term);
-      const categoriesData = await listCategories(); // Kategorileri yükle
       const normalized = data.map((n) => ({
         ...n,
         owner: n.owner ?? "Anonim",
       }));
       setNotes(normalized);
-      setCategories(categoriesData); // Kategorileri state'e ata
     } catch (e) {
       setError(e.message);
     } finally {
@@ -186,8 +178,7 @@ const onAdd = useCallback(async () => {
 await sleep(1000);
       const payload = {
         ...form,
-        category_id: form.category_id || null,
-        tags: form.tags ? form.tags.split(',').map(t => t.trim()) : []
+        tags: form.tags.map(tag => tag.text),
       };
       const created = await createNote(payload);
       const normalized = { ...created, owner: created.owner ?? currentUser };
@@ -209,7 +200,7 @@ await sleep(1000);
       setIsAddModalOpen(false);
       setIsClosingAddModal(false);
       if (resetForm) {
-        setForm({ title: "", content: "", is_private: false, tags: '' }); 
+        setForm({ title: "", content: "", is_private: false, tags: [] }); 
       }
     }, 300);
   }, []);
@@ -234,7 +225,7 @@ await sleep(1000);
         title: note.title,
         content: note.content,
         is_private: note.is_private,
-        category_id: note.category?.id,
+        tags: note.tags.map(tag => typeof tag === 'object' ? tag.text : tag),
       });
 
       const fixed = { ...updated, owner: updated.owner ?? note.owner };
@@ -266,36 +257,17 @@ await sleep(1000);
     handleCloseEditModal();
   };
 
-  const handleFilterClick = useCallback((category) => {
-    if (activeFilter === category) {
-      setActiveFilter(null);
-    } else {
-      setActiveFilter(category);
-    }
-  }, [activeFilter]);
-  // Kategori İstatistiklerini Hesaplama
-  const getCategoryStats = () => {
-    const stats = {};
-
-    notes.forEach(note => {
-        const cat = note.category || 'GEN';
-        if (!stats[cat]) {
-            stats[cat] = { total: 0, private: 0, public: 0 };
-        }
-
-        stats[cat].total++;
-        if (note.is_private) {
-            stats[cat].private++;
-        } else {
-            stats[cat].public++;
-        }
-    });
-    return stats;
+  const getAllTags = () => {
+    const allTags = notes.flatMap(note => note.tags);
+    return [...new Set(allTags)];
   };
-  const categoryStats = getCategoryStats();
 
-  const filteredNotes = activeFilter
-    ? notes.filter(note => note.category === activeFilter)
+  const handleTagClick = (tag) => {
+    setSelectedTag(tag);
+  };
+
+  const filteredNotes = selectedTag
+    ? notes.filter(note => note.tags.includes(selectedTag))
     : notes;
 
   if (!token) {
@@ -313,14 +285,8 @@ await sleep(1000);
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '20px' }}>
-
-          <NoteStats
-            notes={notes}
-            categories={categories}
-            activeFilter={activeFilter}
-            handleFilterClick={handleFilterClick}
-          />
+        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '20px' }}>
+          <EtiketBulutu tags={getAllTags()} onTagClick={handleTagClick} selectedTag={selectedTag} />
 
           <div>
             <Toolbar search={search} setSearch={setSearch} onAddNoteClick={() => setIsAddModalOpen(true)} />
@@ -336,7 +302,6 @@ await sleep(1000);
               notes={notes}
               setNotes={setNotes}
               filteredNotes={filteredNotes}
-              activeFilter={activeFilter}
               onSave={onSave}
               onStartEdit={handleStartEdit}
               onDelete={onDelete}
@@ -355,7 +320,6 @@ await sleep(1000);
           onAdd={onAdd} 
           loading={loading} 
           isClosing={isClosingAddModal}
-          categories={categories}
         />
         <EditNoteModal 
           isOpen={isEditModalOpen} 
@@ -364,7 +328,6 @@ await sleep(1000);
           onSave={handleSaveAndClose} 
           loading={loading} 
           isClosing={isClosingEditModal}
-          categories={categories}
         />
       </div>
     </>

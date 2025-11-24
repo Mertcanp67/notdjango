@@ -1,6 +1,23 @@
 import React from 'react';
-export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, isClosing, categories }) {
+import { WithContext as ReactTags } from 'react-tag-input';
+
+const KeyCodes = {
+  comma: 188,
+  enter: 13,
+};
+
+const delimiters = [KeyCodes.comma, KeyCodes.enter];
+
+export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, isClosing }) {
   if (!isOpen) return null;
+
+  const handleDelete = (i) => {
+    setForm({ ...form, tags: form.tags.filter((tag, index) => index !== i) });
+  };
+
+  const handleAddition = (tag) => {
+    setForm({ ...form, tags: [...form.tags, tag] });
+  };
 
   return (
     <div className={`modal-overlay ${isClosing ? 'closing' : ''}`}>
@@ -23,25 +40,14 @@ export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, i
             style={{ padding: '12px 15px', fontSize: '1.05em' }}
           />
 
-          <select
-            className="input"
-            value={form.category_id || ''}
-            onChange={(e) => setForm({ ...form, category_id: e.target.value })}
-            style={{ marginTop: '10px', padding: '12px 15px', fontSize: '1.05em' }}
-          >
-            <option value="">Kategori Seç</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-          <input
-            className="input"
-            placeholder="Etiketler (virgülle ayırın)"
-            value={form.tags || ''}
-            onChange={(e) => setForm({ ...form, tags: e.target.value })}
-            style={{ marginTop: '10px', padding: '12px 15px', fontSize: '1.05em' }}
+          <ReactTags
+            tags={form.tags.map((tag, i) => ({ id: String(i), text: tag }))}
+            handleDelete={handleDelete}
+            handleAddition={handleAddition}
+            delimiters={delimiters}
+            placeholder="Etiket ekle"
+            inputFieldPosition="bottom"
+            autocomplete
           />
 
           <div style={{
@@ -99,8 +105,20 @@ export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, i
   );
 }
 
-export function EditNoteModal({ isOpen, onClose, note, setNote, onSave, loading, isClosing, categories }) {
+export function EditNoteModal({ isOpen, onClose, note, setNote, onSave, loading, isClosing }) {
   if (!isOpen || !note) return null;
+
+  const handleDelete = (i) => {
+    const tags = Array.isArray(note.tags) ? note.tags : (note.tags || '').split(',').map(t => t.trim());
+    setNote({ ...note, tags: tags.filter((tag, index) => index !== i) });
+  };
+
+  const handleAddition = (tag) => {
+    const tags = Array.isArray(note.tags) ? note.tags : (note.tags || '').split(',').map(t => t.trim());
+    setNote({ ...note, tags: [...tags, tag.text] });
+  };
+
+  const tags = Array.isArray(note.tags) ? note.tags : (note.tags || '').split(',').map(t => t.trim());
 
   return (
     <div className={`modal-overlay ${isClosing ? 'closing' : ''}`}>
@@ -123,25 +141,14 @@ export function EditNoteModal({ isOpen, onClose, note, setNote, onSave, loading,
             style={{ padding: '12px 15px', fontSize: '1.05em' }}
           />
 
-          <select
-            className="input"
-            value={note.category?.id || ''}
-            onChange={(e) => setNote({ ...note, category: categories.find(c => c.id == e.target.value) })}
-            style={{ marginTop: '10px', padding: '12px 15px', fontSize: '1.05em' }}
-          >
-            <option value="">Kategori Seç</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-          <input
-            className="input"
-            placeholder="Etiketler (virgülle ayırın)"
-            value={Array.isArray(note.tags) ? note.tags.join(', ') : note.tags || ''}
-            onChange={(e) => setNote({ ...note, tags: e.target.value })}
-            style={{ marginTop: '10px', padding: '12px 15px', fontSize: '1.05em' }}
+          <ReactTags
+            tags={tags.map((tag, i) => ({ id: String(i), text: tag }))}
+            handleDelete={handleDelete}
+            handleAddition={handleAddition}
+            delimiters={delimiters}
+            placeholder="Etiket ekle"
+            inputFieldPosition="bottom"
+            autocomplete
           />
 
           <div style={{

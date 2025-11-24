@@ -446,3 +446,107 @@
   display: block;
   padding: 1em;
 }
+
+.etiket-bulutu {
+  background: var(--card);
+  padding: 20px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 20px;
+  align-self: start;
+}
+
+.etiket-bulutu h4 {
+  margin-top: 0;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.etiket-listesi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.etiket {
+  background: var(--input-bg);
+  color: var(--muted);
+  border: 1px solid transparent;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.etiket:hover {
+  background: var(--ring);
+  color: var(--text);
+}
+
+.etiket.active {
+  background: var(--primary);
+  color: white;
+  font-weight: bold;
+}
+
+/* React Tags */
+.ReactTags__tags {
+    position: relative;
+}
+
+.ReactTags__tagInput {
+    width: 200px;
+    border-radius: 2px;
+    display: inline-block;
+}
+.ReactTags__tagInput input.ReactTags__tagInputField,
+.ReactTags__tagInput input.ReactTags__tagInputField:focus {
+    height: 31px;
+    margin: 0;
+    font-size: 12px;
+    width: 100%;
+    border: 1px solid #eee;
+    padding: 0 4px;
+}
+
+.ReactTags__selected span.ReactTags__tag {
+    background: var(--primary);
+    color: white;
+    font-size: 12px;
+    display: inline-block;
+    padding: 5px;
+    margin: 0 5px;
+    cursor: move;
+    border-radius: 2px;
+}
+.ReactTags__selected a.ReactTags__remove {
+    color: #aaa;
+    margin-left: 5px;
+    cursor: pointer;
+}
+
+.ReactTags__suggestions {
+    position: absolute;
+}
+.ReactTags__suggestions ul {
+    list-style-type: none;
+    box-shadow: .05em .01em .5em rgba(0,0,0,.2);
+    background: white;
+    width: 200px;
+}
+.ReactTags__suggestions li {
+    border-bottom: 1px solid #ddd;
+    padding: 5px 10px;
+    margin: 0;
+}
+.ReactTags__suggestions li mark {
+    text-decoration: underline;
+    background: none;
+    font-weight: 600;
+}
+.ReactTags__suggestions ul li.ReactTags__activeSuggestion {
+    background: #b7cfe0;
+    cursor: pointer;
+}
