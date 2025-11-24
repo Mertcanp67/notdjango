@@ -27,7 +27,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 export default function Uygulama() {
   const [notes, setNotes] = useState([]);
   const [categories, setCategories] = useState([]); // Eklendi
-  const [form, setForm] = useState({ title: "", content: "", is_private: false, category: 'GEN' });
+  const [form, setForm] = useState({ title: "", content: "", is_private: false, tags: '' });
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -184,7 +184,12 @@ const onAdd = useCallback(async () => {
       setLoading(true);
       setError("");
 await sleep(1000);
-      const created = await createNote(form);
+      const payload = {
+        ...form,
+        category_id: form.category_id || null,
+        tags: form.tags ? form.tags.split(',').map(t => t.trim()) : []
+      };
+      const created = await createNote(payload);
       const normalized = { ...created, owner: created.owner ?? currentUser };
       setNotes((prev) => [normalized, ...prev]);
       
@@ -204,7 +209,7 @@ await sleep(1000);
       setIsAddModalOpen(false);
       setIsClosingAddModal(false);
       if (resetForm) {
-        setForm({ title: "", content: "", is_private: false, category: 'GEN' }); 
+        setForm({ title: "", content: "", is_private: false, tags: '' }); 
       }
     }, 300);
   }, []);
@@ -229,7 +234,7 @@ await sleep(1000);
         title: note.title,
         content: note.content,
         is_private: note.is_private,
-        category: note.category,
+        category_id: note.category?.id,
       });
 
       const fixed = { ...updated, owner: updated.owner ?? note.owner };

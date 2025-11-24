@@ -1,12 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Modal, Form } from "react-bootstrap";
-import { createNote } from "./api";
+import { createNote, listCategories } from "./api";
 
 function AddNoteModal({ show, onHide, onNoteAdded }) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [category, setCategory] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [tags, setTags] = useState("");
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    if (show) {
+      listCategories()
+        .then(setCategories)
+        .catch((err) => console.error("Kategoriler yüklenemedi:", err));
+    }
+  }, [show]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -14,14 +23,14 @@ function AddNoteModal({ show, onHide, onNoteAdded }) {
       const newNote = await createNote({
         title,
         content,
-        category,
-        tags: tags.split(",").map((tag) => tag.trim()),
+        category_id: categoryId || null,
+        tags: tags ? tags.split(",").map((tag) => tag.trim()) : [],
       });
       onNoteAdded(newNote);
       onHide();
       setTitle("");
       setContent("");
-      setCategory("");
+      setCategoryId("");
       setTags("");
     } catch (error) {
       console.error("Not eklenirken hata:", error);
@@ -58,11 +67,17 @@ function AddNoteModal({ show, onHide, onNoteAdded }) {
           <Form.Group>
             <Form.Label>Kategori</Form.Label>
             <Form.Control
-              type="text"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              required
-            />
+              as="select"
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+            >
+              <option value="">Kategori Seç</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </Form.Control>
           </Form.Group>
           <Form.Group>
             <Form.Label>Etiketler (virgülle ayırın)</Form.Label>

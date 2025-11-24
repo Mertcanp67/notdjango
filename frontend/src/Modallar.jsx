@@ -26,16 +26,23 @@ export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, i
           <select
             className="input"
             value={form.category_id || ''}
-            onChange={(e) => setForm({ ...form, category_id: e.target.value ? parseInt(e.target.value, 10) : null })}
+            onChange={(e) => setForm({ ...form, category_id: e.target.value })}
             style={{ marginTop: '10px', padding: '12px 15px', fontSize: '1.05em' }}
           >
-            <option value="">-- Kategori Seç --</option>
-            {categories.map(cat => (
+            <option value="">Kategori Seç</option>
+            {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.name}
               </option>
             ))}
           </select>
+          <input
+            className="input"
+            placeholder="Etiketler (virgülle ayırın)"
+            value={form.tags || ''}
+            onChange={(e) => setForm({ ...form, tags: e.target.value })}
+            style={{ marginTop: '10px', padding: '12px 15px', fontSize: '1.05em' }}
+          />
 
           <div style={{
             display: 'flex',
@@ -119,21 +126,23 @@ export function EditNoteModal({ isOpen, onClose, note, setNote, onSave, loading,
           <select
             className="input"
             value={note.category?.id || ''}
-            onChange={(e) => {
-              const newCategoryId = e.target.value ? parseInt(e.target.value, 10) : null;
-              const newCategory = categories.find(c => c.id === newCategoryId) || null;
-              setNote({ ...note, category_id: newCategoryId, category: newCategory });
-            }}
+            onChange={(e) => setNote({ ...note, category: categories.find(c => c.id == e.target.value) })}
             style={{ marginTop: '10px', padding: '12px 15px', fontSize: '1.05em' }}
           >
-            <option value="">-- Kategori Seç --</option>
-            {/* Edit modal'a da categories prop'u geçilmeli */}
-            {(categories || []).map(cat => (
+            <option value="">Kategori Seç</option>
+            {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.name}
               </option>
             ))}
           </select>
+          <input
+            className="input"
+            placeholder="Etiketler (virgülle ayırın)"
+            value={Array.isArray(note.tags) ? note.tags.join(', ') : note.tags || ''}
+            onChange={(e) => setNote({ ...note, tags: e.target.value })}
+            style={{ marginTop: '10px', padding: '12px 15px', fontSize: '1.05em' }}
+          />
 
           <div style={{
             display: 'flex',
