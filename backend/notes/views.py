@@ -95,11 +95,14 @@ class TagCloudView(APIView):
             visible_notes = Note.objects.all()
         
         # Taggit'in `tag_counts()` metodunu kullanarak etiketleri ve sayılarını al
-        # Bu metot, `annotate` ve `Count` kullanımından daha basit ve verimlidir.
-        tags = Note.tags.tag_counts(queryset=visible_notes).order_by('-count', 'name')
+        # DÜZELTME: `tag_counts` metodu bulunmuyor. Doğru yöntem, Tag modelini
+        # `visible_notes` ile ilişkilendirerek filtrelemek ve saymaktır.
+        tags = Tag.objects.filter(
+            note__in=visible_notes
+        ).annotate(count=Count('note')).order_by('-count', 'name')
         
         # En popüler 50 etiketi al
         top_tags = tags[:50]
-        tag_data = [{'name': tag.name, 'count': tag.count} for tag in top_tags]
+        tag_data = [{'name': tag.name, 'count': tag.count} for tag in top_tags if tag.count > 0]
         
         return Response(tag_data)
