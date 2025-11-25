@@ -1,16 +1,19 @@
 from rest_framework import viewsets, filters, permissions, status
 from rest_framework.views import APIView
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q, Count
 from .models import Note, Category
 from .serializers import NoteSerializer, CategorySerializer
 from .permissions import IsOwnerOrReadOnly
+from .filters import NoteFilter # Oluşturduğumuz filtreyi import ediyoruz
 from taggit.models import Tag # Tag modelini import ettiğinden emin ol
 
 class NoteViewSet(viewsets.ModelViewSet):
     serializer_class = NoteSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [filters.SearchFilter]
+    filterset_class = NoteFilter # Filtre setimizi burada tanımlıyoruz
+    filter_backends = [filters.SearchFilter] # Arama özelliğini koruyoruz
     search_fields = ["title", "content", "owner__username", "tags__name"]
 
     def get_permissions(self):
@@ -30,6 +33,35 @@ class NoteViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+    @action(detail=True, methods=['get'], url_path='related')
+    def related_notes(self, request, pk=None):
+        """
+        Belirli bir nota ait etiketlerle ilişkili diğer notları döndürür.
+        """
+        note = self.get_object()
+        
+        # Notun etiketlerini al
+        tag_ids = note.tags.values_list('id', flat=True)
+
+        if not tag_ids:
+            # Eğer notun hiç etiketi yoksa, boş liste döndür
+            return Response([])
+
+        # Bu etiketlerden herhangi birine sahip olan, ancak mevcut notun kendisi olmayan notları bul
+        # Ayrıca kullanıcının görme yetkisi olan notları (kendisininkiler veya public olanlar) filtrele
+        user = request.user
+        related_notes = Note.objects.filter(
+            tags__in=tag_ids
+        ).exclude(
+            pk=note.pk
+        ).filter(
+            Q(owner=user) | Q(is_private=False)
+        ).distinct().order_by("-id")[:10] # Sonuçları 10 ile sınırla
+
+        # İlişkili notları serialize et
+        serializer = self.get_serializer(related_notes, many=True)
+        return Response(serializer.data)
 
 class CategoryViewSet(viewsets.ModelViewSet):
     """
@@ -55,20 +87,19 @@ class TagCloudView(APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
 
+        # Kullanıcının görebileceği notları (kendisininkiler ve herkese açık olanlar) filtrele
+        visible_notes = Note.objects.filter(Q(owner=user) | Q(is_private=False)).distinct()
+
+        # Admin ise tüm notları dikkate al
         if user.is_staff:
-            queryset = Tag.objects.all()
-        else:
-            note_ids = Note.objects.filter(Q(owner=user) | Q(is_private=False)).values_list('id', flat=True)
-            if not note_ids:
-                queryset = Tag.objects.none()
-            else:
-                queryset = Tag.objects.filter(note__id__in=note_ids)
-
-        tags = queryset.annotate(
-            num_times=Count('taggit_taggeditem_items')
-        ).order_by('-num_times', 'name')
-
-        tags = tags[:50]
-        tag_data = [{'name': tag.name, 'count': tag.num_times} for tag in tags]
+            visible_notes = Note.objects.all()
+        
+        # Taggit'in `tag_counts()` metodunu kullanarak etiketleri ve sayılarını al
+        # Bu metot, `annotate` ve `Count` kullanımından daha basit ve verimlidir.
+        tags = Note.tags.tag_counts(queryset=visible_notes).order_by('-count', 'name')
+        
+        # En popüler 50 etiketi al
+        top_tags = tags[:50]
+        tag_data = [{'name': tag.name, 'count': tag.count} for tag in top_tags]
         
         return Response(tag_data)
