@@ -1,52 +1,77 @@
 import React from 'react';
 
-export function NoteStats({ notes, categories = [], activeFilter, handleFilterClick }) {
+const StatCard = ({ title, children }) => (
+  <div className="card" style={{ marginBottom: '20px', padding: '15px' }}>
+    <h3 style={{ margin: '0 0 15px', color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 10, fontSize: '1.1em' }}>
+      {title}
+    </h3>
+    {children}
+  </div>
+);
+
+const Tag = ({ tag, onClick, isSelected }) => (
+  <button
+    className={`etiket ${isSelected ? 'active' : ''}`}
+    onClick={onClick}
+  >
+    {tag}
+  </button>
+);
+
+export function NoteStats({ notes, categories = [], activeFilter, handleFilterClick, onTagClick, selectedTag }) {
+  const allTags = [...new Set(notes.flatMap(note => note.tags))];
+
   return (
     <div style={{ position: 'sticky', top: '20px', alignSelf: 'start', zIndex: 1 }}>
-      <div className="card stat-dashboard" style={{ marginBottom: '20px', padding: '15px' }}>
-        <h3 style={{ margin: '0 0 10px', color: 'var(--primary)', borderBottom: '1px solid var(--muted)', paddingBottom: 5, fontSize: '1.2em' }}>
-          📊 Not İstatistikleri
-        </h3>
-        <div style={{ display: 'flex', justifyContent: 'space-around', fontWeight: 'bold', marginBottom: 15, paddingBottom: 5, borderBottom: '1px dotted var(--muted)' }}>
-          <div>Toplam: <span style={{ color: 'var(--info)' }}>{notes.length}</span></div>
-          <div>Gizli: <span style={{ color: 'var(--danger)' }}>{notes.filter(n => n.is_private).length}</span></div>
-          <div>Açık: <span style={{ color: 'var(--success)' }}>{notes.filter(n => !n.is_private).length}</span></div>
+      <StatCard title="📊 Not İstatistikleri">
+        <div style={{ display: 'flex', justifyContent: 'space-around', fontWeight: 'bold', fontSize: '0.9em' }}>
+          <div>Toplam: <span style={{ color: 'var(--primary-strong)', fontSize: '1.2em' }}>{notes.length}</span></div>
+          <div>Gizli: <span style={{ color: 'var(--danger)', fontSize: '1.2em' }}>{notes.filter(n => n.is_private).length}</span></div>
+          <div>Açık: <span style={{ color: 'var(--success)', fontSize: '1.2em' }}>{notes.filter(n => !n.is_private).length}</span></div>
         </div>
+      </StatCard>
 
-        <div style={{ marginTop: 10 }}>
-          {categories.map(cat => {
-            const notesInCategory = notes.filter(n => n.category?.id === cat.id);
-            const total = notesInCategory.length;
-            if (total === 0) return null; // Kategoride not yoksa gösterme
+      {categories.length > 0 && (
+        <StatCard title="🗂️ Kategoriler">
+          <div style={{ marginTop: 10 }}>
+            {categories.map(cat => {
+              const total = notes.filter(n => n.category?.id === cat.id).length;
+              if (total === 0) return null;
 
-            const publicCount = notesInCategory.filter(n => !n.is_private).length;
-            const privateCount = total - publicCount;
-
-            const isSelected = activeFilter === cat.id;
-            const itemClass = `stat-item ${isSelected ? 'selected' : ''}`;
-
-            return (
-              <div
-                key={cat.id}
-                className={itemClass}
-                onClick={() => handleFilterClick(cat.id)}
-                style={{ marginBottom: 8, padding: '8px 5px', borderRadius: '5px' }}
-              >
-                <div style={{ fontWeight: 'bold', color: cat.color, flexGrow: 1, fontSize: '0.95em' }}>
-                  {cat.name.toUpperCase()}
+              return (
+                <div
+                  key={cat.id}
+                  className={`stat-item ${activeFilter === cat.id ? 'selected' : ''}`}
+                  onClick={() => handleFilterClick(cat.id)}
+                >
+                  <div style={{ fontWeight: 'bold', color: cat.color, flexGrow: 1 }}>{cat.name}</div>
+                  <div style={{ fontSize: '1.1em', fontWeight: 'bold' }}>{total}</div>
                 </div>
-                <div style={{ fontSize: '0.9em', color: 'var(--text)' }}>
-                  ({publicCount} A {privateCount} G)
-                </div>
-                <div style={{ fontSize: '1em', fontWeight: 'bold', marginLeft: 15 }}>
-                  {total}
-                </div>
-              </div>
-            );
-          })}
-          {/* TODO: Kategori Yönetim Butonu buraya eklenebilir */}
-        </div>
-      </div>
+              );
+            })}
+          </div>
+        </StatCard>
+      )}
+
+      {allTags.length > 0 && (
+        <StatCard title="🏷️ Etiketler">
+          <div className="etiket-listesi">
+            <Tag
+              tag="Tümü"
+              onClick={() => onTagClick(null)}
+              isSelected={!selectedTag}
+            />
+            {allTags.map((tag) => (
+              <Tag
+                key={tag}
+                tag={tag}
+                onClick={() => onTagClick(tag)}
+                isSelected={selectedTag === tag}
+              />
+            ))}
+          </div>
+        </StatCard>
+      )}
     </div>
   );
 }

@@ -41,7 +41,7 @@ export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, i
           />
 
           <ReactTags
-            tags={form.tags.map((tag, i) => ({ id: String(i), text: tag }))}
+            tags={form.tags}
             handleDelete={handleDelete}
             handleAddition={handleAddition}
             delimiters={delimiters}

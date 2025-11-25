@@ -6,6 +6,7 @@ import {
   updateNote,
   deleteNote,
   authFetch,
+  listCategories,
 } from "./api.js";
 import "./stil.css";
 import { useDebounce } from "./hooks";
@@ -14,7 +15,7 @@ import { Header } from "./Baslik.jsx";
 import { Toolbar } from "./AracCubugu.jsx";
 import { NoteList } from './NotListesi.jsx';
 import { AddNoteModal, EditNoteModal } from './Modallar.jsx';
-import EtiketBulutu from "./EtiketBulutu.jsx";
+import { NoteStats } from "./NotIstatistikleri.jsx";
 
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -22,18 +23,20 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function Uygulama() {
   const [notes, setNotes] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [form, setForm] = useState({ title: "", content: "", is_private: false, tags: [] });
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSuccessVisible, setIsSuccessVisible] = useState(false);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false); // Modal state'i
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Düzenleme modalı için state
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const [isClosingAddModal, setIsClosingAddModal] = useState(false);
   const [isClosingEditModal, setIsClosingEditModal] = useState(false);
   const [selectedTag, setSelectedTag] = useState(null);
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState(null);
 
   const [token, setToken] = useState(localStorage.getItem("authToken"));
   const [currentUser, setCurrentUser] = useState(
@@ -55,12 +58,18 @@ export default function Uygulama() {
   const load = useCallback(async (term = "") => {
     try {
       setLoading(true);
-      const data = await listNotes(term);
-      const normalized = data.map((n) => ({
+      const [notesData, categoriesData] = await Promise.all([
+        listNotes(term),
+        listCategories(),
+      ]);
+      
+      const normalizedNotes = notesData.map((n) => ({
         ...n,
         owner: n.owner ?? "Anonim",
       }));
-      setNotes(normalized);
+      setNotes(normalizedNotes);
+      setCategories(categoriesData);
+
     } catch (e) {
       setError(e.message);
     } finally {
@@ -74,6 +83,7 @@ export default function Uygulama() {
       load(debouncedSearchTerm);
     } else {
       setNotes([]);
+      setCategories([]);
       localStorage.removeItem("currentUser");
     }
   }, [token, currentUser, debouncedSearchTerm, load]);
@@ -175,7 +185,7 @@ const onAdd = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
-await sleep(1000);
+      await sleep(1000);
       const payload = {
         ...form,
         tags: form.tags.map(tag => tag.text),
@@ -236,7 +246,7 @@ await sleep(1000);
     } catch (e) {
       setError("Güncelleme başarısız: Yetkiniz olmayabilir. " + e.message);
     }
-  }, [currentUser]);
+  }, []);
 
   const handleStartEdit = useCallback((note) => {
     setEditingNote(note);
@@ -257,18 +267,23 @@ await sleep(1000);
     handleCloseEditModal();
   };
 
-  const getAllTags = () => {
-    const allTags = notes.flatMap(note => note.tags);
-    return [...new Set(allTags)];
-  };
-
   const handleTagClick = (tag) => {
     setSelectedTag(tag);
+    // Kategori filtresini temizle
+    setActiveCategoryFilter(null);
   };
 
-  const filteredNotes = selectedTag
-    ? notes.filter(note => note.tags.includes(selectedTag))
-    : notes;
+  const handleCategoryFilterClick = (categoryId) => {
+    setActiveCategoryFilter(prev => prev === categoryId ? null : categoryId);
+    // Etiket filtresini temizle
+    setSelectedTag(null);
+  };
+
+  const filteredNotes = notes.filter(note => {
+    const tagMatch = selectedTag ? note.tags.includes(selectedTag) : true;
+    const categoryMatch = activeCategoryFilter ? note.category?.id === activeCategoryFilter : true;
+    return tagMatch && categoryMatch;
+  });
 
   if (!token) {
     return <Auth onLogin={handleLogin} onRegister={handleRegister} loading={loading} error={error} setError={setError} />;
@@ -285,10 +300,19 @@ await sleep(1000);
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '20px' }}>
-          <EtiketBulutu tags={getAllTags()} onTagClick={handleTagClick} selectedTag={selectedTag} />
+        <div className="main-layout">
+          <div className="main-layout-left">
+            <NoteStats 
+              notes={notes}
+              categories={categories}
+              activeFilter={activeCategoryFilter}
+              handleFilterClick={handleCategoryFilterClick}
+              onTagClick={handleTagClick}
+              selectedTag={selectedTag}
+            />
+          </div>
 
-          <div>
+          <div className="main-layout-right">
             <Toolbar search={search} setSearch={setSearch} onAddNoteClick={() => setIsAddModalOpen(true)} />
 
             {loading && <p className="footer-muted">Yükleniyor…</p>}
@@ -302,6 +326,7 @@ await sleep(1000);
               notes={notes}
               setNotes={setNotes}
               filteredNotes={filteredNotes}
+              activeFilter={selectedTag || activeCategoryFilter}
               onSave={onSave}
               onStartEdit={handleStartEdit}
               onDelete={onDelete}
