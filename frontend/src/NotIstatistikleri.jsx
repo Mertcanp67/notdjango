@@ -18,9 +18,7 @@ const Tag = ({ tag, onClick, isSelected }) => (
   </button>
 );
 
-export function NoteStats({ notes, categories = [], activeFilter, handleFilterClick, onTagClick, selectedTag }) {
-  const allTags = [...new Set(notes.flatMap(note => note.tags))];
-
+export function NoteStats({ notes, categories = [], tags = [], activeFilter, handleFilterClick, onTagClick, selectedTag }) {
   return (
     <div style={{ position: 'sticky', top: '20px', alignSelf: 'start', zIndex: 1 }}>
       <StatCard title="📊 Not İstatistikleri">
@@ -53,7 +51,7 @@ export function NoteStats({ notes, categories = [], activeFilter, handleFilterCl
         </StatCard>
       )}
 
-      {allTags.length > 0 && (
+      {tags.length > 0 && (
         <StatCard title="🏷️ Etiketler">
           <div className="etiket-listesi">
             <Tag
@@ -61,12 +59,12 @@ export function NoteStats({ notes, categories = [], activeFilter, handleFilterCl
               onClick={() => onTagClick(null)}
               isSelected={!selectedTag}
             />
-            {allTags.map((tag) => (
+            {tags.map((tag) => (
               <Tag
-                key={tag}
-                tag={tag}
-                onClick={() => onTagClick(tag)}
-                isSelected={selectedTag === tag}
+                key={tag.name}
+                tag={`${tag.name} (${tag.count})`}
+                onClick={() => onTagClick(tag.name)}
+                isSelected={selectedTag === tag.name}
               />
             ))}
           </div>

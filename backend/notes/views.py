@@ -47,7 +47,38 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
 
     def get_queryset(self):
-        return Category.objects.filter(owner=self.request.user).order_by('name')
-
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+from taggit.models import Tag
+from django.db.models import Count
+
+class TagCloudView(APIView):
+    """
+    Kullanıcının notlarına göre etiket bulutu verisi döndürür.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+
+        if user.is_staff:
+            # Admin tüm etiketleri görür
+            queryset = Tag.objects.all()
+        else:
+            # Normal kullanıcılar kendi notlarının veya herkese açık notların etiketlerini görür
+            note_ids = Note.objects.filter(Q(owner=user) | Q(is_private=False)).values_list('id', flat=True)
+            queryset = Tag.objects.filter(notes__id__in=note_ids)
+
+        # Etiketleri say ve en çok kullanılandan en aza doğru sırala
+        tags = queryset.annotate(
+            num_times=Count('taggit_taggeditem_items')
+        ).order_by('-num_times', 'name')
+
+        # Sadece 50 en popüler etiketi al
+        tags = tags[:50]
+
+        # Veriyi JSON formatına uygun hale getir
+        tag_data = [{'name': tag.name, 'count': tag.num_times} for tag in tags]
+        
+        return Response(tag_data)

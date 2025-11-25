@@ -7,6 +7,7 @@ import {
   deleteNote,
   authFetch,
   listCategories,
+  listTags,
 } from "./api.js";
 import "./stil.css";
 import { useDebounce } from "./hooks";
@@ -24,6 +25,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 export default function Uygulama() {
   const [notes, setNotes] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [tags, setTags] = useState([]);
   const [form, setForm] = useState({ title: "", content: "", is_private: false, tags: [] });
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -58,9 +60,10 @@ export default function Uygulama() {
   const load = useCallback(async (term = "") => {
     try {
       setLoading(true);
-      const [notesData, categoriesData] = await Promise.all([
+      const [notesData, categoriesData, tagsData] = await Promise.all([
         listNotes(term),
         listCategories(),
+        listTags(),
       ]);
       
       const normalizedNotes = notesData.map((n) => ({
@@ -69,6 +72,7 @@ export default function Uygulama() {
       }));
       setNotes(normalizedNotes);
       setCategories(categoriesData);
+      setTags(tagsData);
 
     } catch (e) {
       setError(e.message);
@@ -304,6 +308,7 @@ const onAdd = useCallback(async () => {
           <div className="main-layout-left">
             <NoteStats 
               notes={notes}
+              tags={tags}
               categories={categories}
               activeFilter={activeCategoryFilter}
               handleFilterClick={handleCategoryFilterClick}

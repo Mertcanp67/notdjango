@@ -60,3 +60,4 @@ export const createCategory = (payload) =>
   apiFetch("/api/categories/", { method: "POST", body: JSON.stringify(payload) });
 export const updateCategory = (id, payload) =>
   apiFetch(`/api/categories/${id}/`, { method: "PATCH", body: JSON.stringify(payload) });
+export const listTags = () => apiFetch("/api/tags/");

@@ -81,6 +81,16 @@ const EditableNoteComponent = React.forwardRef(({ note, onStartEdit, onDelete, c
             </div>
           )}
         </div>
+
+        {note.tags && note.tags.length > 0 && (
+            <div className="note-tags">
+                {note.tags.map(tag => (
+                    <span key={tag} className="etiket">
+            {tag}
+          </span>
+                ))}
+            </div>
+        )}
   
       {showConfirm && (
           <div className={`delete-confirm-overlay ${isClosingConfirm ? 'closing' : ''}`}>

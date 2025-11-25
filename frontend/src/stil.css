@@ -470,13 +470,21 @@
   gap: 8px;
 }
 
+.note-tags {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .etiket {
-  background: var(--input-bg);
+  background: var(--ring);
   color: var(--muted);
   border: 1px solid transparent;
-  padding: 5px 10px;
-  border-radius: 8px;
-  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: default;
   transition: all 0.2s ease;
 }
 
