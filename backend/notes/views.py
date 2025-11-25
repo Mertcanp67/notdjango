@@ -47,8 +47,8 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
 
     def get_queryset(self):
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        def perform_create(self, serializer):
+            serializer.save(owner=self.request.user)
 
 from taggit.models import Tag
 from django.db.models import Count
