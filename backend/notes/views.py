@@ -59,7 +59,10 @@ class TagCloudView(APIView):
             queryset = Tag.objects.all()
         else:
             note_ids = Note.objects.filter(Q(owner=user) | Q(is_private=False)).values_list('id', flat=True)
-            queryset = Tag.objects.filter(notes__id__in=note_ids)
+            if not note_ids:
+                queryset = Tag.objects.none()
+            else:
+                queryset = Tag.objects.filter(note__id__in=note_ids)
 
         tags = queryset.annotate(
             num_times=Count('taggit_taggeditem_items')
