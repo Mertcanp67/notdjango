@@ -3,11 +3,14 @@ from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q, Count
+from django.utils import timezone
+from datetime import timedelta
 from .models import Note, Category
-from .serializers import NoteSerializer, CategorySerializer
+from .serializers import NoteSerializer, CategorySerializer, TagSerializer
 from .permissions import IsOwnerOrReadOnly
 from .filters import NoteFilter # Oluşturduğumuz filtreyi import ediyoruz
-from taggit.models import Tag # Tag modelini import ettiğinden emin ol
+from taggit.models import Tag, TaggedItem # Tag modelini import ettiğinden emin ol
+
 
 class NoteViewSet(viewsets.ModelViewSet):
     serializer_class = NoteSerializer
@@ -106,3 +109,29 @@ class TagCloudView(APIView):
         tag_data = [{'name': tag.name, 'count': tag.count} for tag in top_tags if tag.count > 0]
         
         return Response(tag_data)
+
+class TrendingTagsView(APIView):
+    """
+    Son 30 gün içinde en çok kullanılan etiketleri döndürür.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+
+        # Kullanıcının görebileceği ve son 30 günde oluşturulmuş notları filtrele
+        visible_notes = Note.objects.filter(
+            Q(owner=user) | Q(is_private=False),
+            created_at__gte=thirty_days_ago
+        ).distinct()
+
+        # Bu notlarla ilişkili etiketleri say
+        trending_tags = Tag.objects.filter(
+            note__in=visible_notes
+        ).annotate(
+            count=Count('note')
+        ).order_by('-count', 'name')[:10] # En popüler 10 tanesini al
+
+        serializer = TagSerializer(trending_tags, many=True, context={'request': request})
+        return Response(serializer.data)
