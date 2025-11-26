@@ -38,7 +38,9 @@ export default function Uygulama() {
   const [isClosingAddModal, setIsClosingAddModal] = useState(false);
   const [isClosingEditModal, setIsClosingEditModal] = useState(false);
   const [selectedTag, setSelectedTag] = useState(null);
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState(null);
+  const [draggedNoteId, setDraggedNoteId] = useState(null);
+  const [dragOverNoteId, setDragOverNoteId] = useState(null);
+
 
   const [token, setToken] = useState(localStorage.getItem("authToken"));
   const [currentUser, setCurrentUser] = useState(
@@ -54,6 +56,15 @@ export default function Uygulama() {
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     return prefersDark ? 'dark' : 'light';
   });
+
+  const reloadTags = useCallback(async () => {
+    try {
+      const tagsData = await listTags();
+      setTags(tagsData);
+    } catch (e) {
+      console.error("Etiketler yeniden yüklenirken hata oluştu:", e);
+    }
+  }, []);
 
   const debouncedSearchTerm = useDebounce(search, 500);
 
@@ -141,7 +152,7 @@ export default function Uygulama() {
       });
 
       setLoading(false);
-      showSuccess("Kayıt başarılı! Lütfen giriş yapın.");
+      showSuccess("Başarıyla kayıt olundu! Lütfen giriş yapın.");
     } catch (e) {
       setLoading(false);
       setError(e.message);
@@ -169,6 +180,7 @@ export default function Uygulama() {
       setCurrentUser(username);
       setToken(data.key); 
       setIsAdmin(data.is_staff);
+      showSuccess(`Hoş geldin, ${username}! Başarıyla giriş yapıldı.`);
     } catch (e) {
       setLoading(false);
       setError(e.message);
@@ -192,13 +204,14 @@ const onAdd = useCallback(async () => {
       await sleep(1000);
       const payload = {
         ...form,
-        tags: form.tags.map(tag => tag.text),
+        tags: form.tags, // Artık etiketler zaten string dizisi
       };
       const created = await createNote(payload);
       const normalized = { ...created, owner: created.owner ?? currentUser };
       setNotes((prev) => [normalized, ...prev]);
       
       handleCloseAddModal(true);
+      reloadTags(); // Etiketleri yeniden yükle
       showSuccess("Not başarıyla eklendi!");
 
     } catch (e) {
@@ -206,7 +219,7 @@ const onAdd = useCallback(async () => {
     } finally {
       setLoading(false);
     }
-  }, [form, currentUser]);
+  }, [form, currentUser, reloadTags]);
 
   const handleCloseAddModal = useCallback((resetForm = false) => {
     setIsClosingAddModal(true);
@@ -225,12 +238,13 @@ const onAdd = useCallback(async () => {
     try {
       setError("");
       await deleteNote(id);
+      reloadTags(); // Etiketleri yeniden yükle
       showSuccess("Not başarıyla silindi!");
     } catch (e) {
       setError("Silme başarısız: Yetkiniz olmayabilir. " + e.message);
       setNotes(prev);
     }
-  }, [notes]);
+  }, [notes, reloadTags]);
 
   const onSave = useCallback(async (note) => {
     try {
@@ -239,18 +253,19 @@ const onAdd = useCallback(async () => {
         title: note.title,
         content: note.content,
         is_private: note.is_private,
-        tags: note.tags.map(tag => typeof tag === 'object' ? tag.text : tag),
+        tags: note.tags, // Artık etiketler zaten string dizisi
       });
 
       const fixed = { ...updated, owner: updated.owner ?? note.owner };
       setNotes((prev) => prev.map((n) => (n.id === note.id ? fixed : n)));
 
+      reloadTags(); // Etiketleri yeniden yükle
       showSuccess("Not başarıyla güncellendi!");
 
     } catch (e) {
       setError("Güncelleme başarısız: Yetkiniz olmayabilir. " + e.message);
     }
-  }, []);
+  }, [reloadTags]);
 
   const handleStartEdit = useCallback((note) => {
     setEditingNote(note);
@@ -271,26 +286,55 @@ const onAdd = useCallback(async () => {
     handleCloseEditModal();
   };
 
-  const handleTagClick = (tag) => {
-    setSelectedTag(tag);
-    // Kategori filtresini temizle
-    setActiveCategoryFilter(null);
+  const handleDragStart = (e, noteId) => {
+    setDraggedNoteId(noteId);
+    e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleCategoryFilterClick = (categoryId) => {
-    setActiveCategoryFilter(prev => prev === categoryId ? null : categoryId);
-    // Etiket filtresini temizle
-    setSelectedTag(null);
+  const handleDragOver = (e, noteId) => {
+    e.preventDefault();
+    if (noteId !== dragOverNoteId) {
+      setDragOverNoteId(noteId);
+    }
+  };
+
+  const handleDrop = async (e, dropNoteId) => {
+    e.preventDefault();
+    if (draggedNoteId === dropNoteId) return;
+
+    const draggedIndex = notes.findIndex(n => n.id === draggedNoteId);
+    const dropIndex = notes.findIndex(n => n.id === dropNoteId);
+
+    if (draggedIndex === -1 || dropIndex === -1) return;
+
+    const newNotes = [...notes];
+    const [draggedItem] = newNotes.splice(draggedIndex, 1);
+    newNotes.splice(dropIndex, 0, draggedItem);
+
+    setNotes(newNotes);
+
+    // TODO: Backend'de sıralamayı kaydetme özelliği eklendiğinde burası aktif edilecek.
+    // console.log("Yeni sıralama:", newNotes.map(n => n.id));
   };
 
   const filteredNotes = notes.filter(note => {
-    const tagMatch = selectedTag ? note.tags.includes(selectedTag) : true;
-    const categoryMatch = activeCategoryFilter ? note.category?.id === activeCategoryFilter : true;
-    return tagMatch && categoryMatch;
+    // note.tags'in bir dizi olduğundan emin olalım
+    const tagMatch = selectedTag 
+      ? Array.isArray(note.tags) && note.tags.includes(selectedTag) 
+      : true;
+    return tagMatch;
   });
 
   if (!token) {
-    return <Auth onLogin={handleLogin} onRegister={handleRegister} loading={loading} error={error} setError={setError} />;
+    return <Auth 
+      onLogin={handleLogin} 
+      onRegister={handleRegister} 
+      loading={loading} 
+      error={error} 
+      setError={setError}
+      successMessage={successMessage}
+      isSuccessVisible={isSuccessVisible}
+    />;
   }
 
   return (
@@ -310,9 +354,7 @@ const onAdd = useCallback(async () => {
               notes={notes}
               tags={tags}
               categories={categories}
-              activeFilter={activeCategoryFilter}
-              handleFilterClick={handleCategoryFilterClick}
-              onTagClick={handleTagClick}
+              onTagClick={(tag) => setSelectedTag(tag)}
               selectedTag={selectedTag}
             />
           </div>
@@ -331,32 +373,38 @@ const onAdd = useCallback(async () => {
               notes={notes}
               setNotes={setNotes}
               filteredNotes={filteredNotes}
-              activeFilter={selectedTag || activeCategoryFilter}
+              activeFilter={selectedTag}
               onSave={onSave}
               onStartEdit={handleStartEdit}
               onDelete={onDelete}
+              onTagClick={(tag) => setSelectedTag(tag)}
               currentUser={currentUser}
+              draggedNoteId={draggedNoteId}
+              dragOverNoteId={dragOverNoteId}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
               isAdmin={isAdmin} 
             />
           </div>
 
         </div>
 
-        <AddNoteModal 
-          isOpen={isAddModalOpen} 
-          onClose={() => handleCloseAddModal(false)} 
-          form={form} 
-          setForm={setForm} 
-          onAdd={onAdd} 
-          loading={loading} 
+        <AddNoteModal
+          isOpen={isAddModalOpen}
+          onClose={() => handleCloseAddModal(false)}
+          form={form}
+          setForm={setForm}
+          onAdd={onAdd}
+          loading={loading}
           isClosing={isClosingAddModal}
         />
-        <EditNoteModal 
-          isOpen={isEditModalOpen} 
-          onClose={handleCloseEditModal} 
-          note={editingNote} setNote={setEditingNote} 
-          onSave={handleSaveAndClose} 
-          loading={loading} 
+        <EditNoteModal
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+          note={editingNote} setNote={setEditingNote}
+          onSave={handleSaveAndClose}
+          loading={loading}
           isClosing={isClosingEditModal}
         />
       </div>

@@ -87,7 +87,7 @@ const StyledToggleButton = styled(ToggleButton)(({ theme }) => ({
   },
 }));
 
-export function Auth({ onLogin, onRegister, loading, error, setError }) {
+export function Auth({ onLogin, onRegister, loading, error, setError, successMessage, isSuccessVisible }) {
   const [authMode, setAuthMode] = useState('login');
   const [authForm, setAuthForm] = useState({
     username: '',
@@ -246,6 +246,14 @@ export function Auth({ onLogin, onRegister, loading, error, setError }) {
           <AnimatePresence mode="wait">
             {renderForm()}
           </AnimatePresence>
+
+          {isSuccessVisible && successMessage && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+              <Alert severity="success" sx={{ mt: 2, width: '100%', borderRadius: '8px' }}>
+                {successMessage}
+              </Alert>
+            </motion.div>
+          )}
 
           {error && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>

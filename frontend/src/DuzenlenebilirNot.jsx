@@ -1,7 +1,19 @@
 import React, { useState } from 'react';
 import { CategoryMap } from "./sabitler.jsx";
 import ReactMarkdown from 'react-markdown';
-const EditableNoteComponent = React.forwardRef(({ note, onStartEdit, onDelete, currentUser, isAdmin, animationDelay, extraClassName, ...props }, ref) => {
+
+// Etiketlere tutarlı ama rastgele renkler atamak için bir yardımcı fonksiyon
+const stringToHslColor = (str, s, l) => {
+  if (!str) return `hsl(0, 0%, 80%)`;
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const h = hash % 360;
+  return `hsl(${h}, ${s}%, ${l}%)`;
+};
+
+const EditableNoteComponent = React.forwardRef(({ note, onStartEdit, onDelete, onTagClick, currentUser, isAdmin, animationDelay, extraClassName, ...props }, ref) => {
     const [showConfirm, setShowConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false); 
     const [isClosingConfirm, setIsClosingConfirm] = useState(false); 
@@ -83,11 +95,19 @@ const EditableNoteComponent = React.forwardRef(({ note, onStartEdit, onDelete, c
         </div>
 
         {note.tags && note.tags.length > 0 && (
-          <div className="note-tags-container">
+          <div className="note-tags">
             {note.tags.map((tag, index) => (
-              <span key={index} className="note-tag">
-                {tag}
-              </span>
+              <button
+                key={index}
+                className="note-tag"
+                onClick={() => onTagClick(tag)}
+                style={{
+                  backgroundColor: stringToHslColor(tag, 50, 30),
+                  color: stringToHslColor(tag, 50, 85)
+                }}
+              >
+                #{tag}
+              </button>
             ))}
           </div>
         )}

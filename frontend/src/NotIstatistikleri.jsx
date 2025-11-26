@@ -18,7 +18,7 @@ const Tag = ({ tag, onClick, isSelected }) => (
   </button>
 );
 
-export function NoteStats({ notes, categories = [], tags = [], activeFilter, handleFilterClick, onTagClick, selectedTag }) {
+export function NoteStats({ notes, categories = [], tags = [], onTagClick, selectedTag }) {
   return (
     <div style={{ position: 'sticky', top: '20px', alignSelf: 'start', zIndex: 1 }}>
       <StatCard title="📊 Not İstatistikleri">
@@ -39,8 +39,8 @@ export function NoteStats({ notes, categories = [], tags = [], activeFilter, han
               return (
                 <div
                   key={cat.id}
-                  className={`stat-item ${activeFilter === cat.id ? 'selected' : ''}`}
-                  onClick={() => handleFilterClick(cat.id)}
+                  className={`stat-item`}
+                  // onClick={() => handleFilterClick(cat.id)}
                 >
                   <div style={{ fontWeight: 'bold', color: cat.color, flexGrow: 1 }}>{cat.name}</div>
                   <div style={{ fontSize: '1.1em', fontWeight: 'bold' }}>{total}</div>
@@ -59,7 +59,7 @@ export function NoteStats({ notes, categories = [], tags = [], activeFilter, han
               onClick={() => onTagClick(null)}
               isSelected={!selectedTag}
             />
-            {tags.map((tag) => (
+            {tags.map((tag) => (              
               <Tag
                 key={tag.name}
                 tag={`${tag.name} (${tag.count})`}

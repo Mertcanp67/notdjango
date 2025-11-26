@@ -1,23 +1,8 @@
 import React from 'react';
-import { WithContext as ReactTags } from 'react-tag-input';
+import { TagInput } from './TagInput';
 
-const KeyCodes = {
-  comma: 188,
-  enter: 13,
-};
-
-const delimiters = [KeyCodes.comma, KeyCodes.enter];
-
-export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, isClosing }) {
+export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, isClosing, allTags = [] }) {
   if (!isOpen) return null;
-
-  const handleDelete = (i) => {
-    setForm({ ...form, tags: form.tags.filter((tag, index) => index !== i) });
-  };
-
-  const handleAddition = (tag) => {
-    setForm({ ...form, tags: [...form.tags, tag] });
-  };
 
   return (
     <div className={`modal-overlay ${isClosing ? 'closing' : ''}`}>
@@ -40,15 +25,7 @@ export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, i
             style={{ padding: '12px 15px', fontSize: '1.05em' }}
           />
 
-          <ReactTags
-            tags={form.tags}
-            handleDelete={handleDelete}
-            handleAddition={handleAddition}
-            delimiters={delimiters}
-            placeholder="Etiket ekle"
-            inputFieldPosition="bottom"
-            autocomplete
-          />
+          <TagInput tags={form.tags || []} setTags={(newTags) => setForm({ ...form, tags: newTags })} />
 
           <div style={{
             display: 'flex',
@@ -105,20 +82,8 @@ export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, i
   );
 }
 
-export function EditNoteModal({ isOpen, onClose, note, setNote, onSave, loading, isClosing }) {
+export function EditNoteModal({ isOpen, onClose, note, setNote, onSave, loading, isClosing, allTags = [] }) {
   if (!isOpen || !note) return null;
-
-  const handleDelete = (i) => {
-    const tags = Array.isArray(note.tags) ? note.tags : (note.tags || '').split(',').map(t => t.trim());
-    setNote({ ...note, tags: tags.filter((tag, index) => index !== i) });
-  };
-
-  const handleAddition = (tag) => {
-    const tags = Array.isArray(note.tags) ? note.tags : (note.tags || '').split(',').map(t => t.trim());
-    setNote({ ...note, tags: [...tags, tag.text] });
-  };
-
-  const tags = Array.isArray(note.tags) ? note.tags : (note.tags || '').split(',').map(t => t.trim());
 
   return (
     <div className={`modal-overlay ${isClosing ? 'closing' : ''}`}>
@@ -141,15 +106,7 @@ export function EditNoteModal({ isOpen, onClose, note, setNote, onSave, loading,
             style={{ padding: '12px 15px', fontSize: '1.05em' }}
           />
 
-          <ReactTags
-            tags={tags.map((tag, i) => ({ id: String(i), text: tag }))}
-            handleDelete={handleDelete}
-            handleAddition={handleAddition}
-            delimiters={delimiters}
-            placeholder="Etiket ekle"
-            inputFieldPosition="bottom"
-            autocomplete
-          />
+          <TagInput tags={note.tags || []} setTags={(newTags) => setNote({ ...note, tags: newTags })} />
 
           <div style={{
             display: 'flex',
