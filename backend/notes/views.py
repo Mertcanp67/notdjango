@@ -41,6 +41,15 @@ class NoteViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
+    def destroy(self, request, *args, **kwargs):
+        """
+        Bir notu kalıcı olarak silmek yerine 'is_deleted' olarak işaretler (soft delete).
+        """
+        note = self.get_object()
+        note.is_deleted = True
+        note.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @action(detail=True, methods=['get'], url_path='related')
     def related_notes(self, request, pk=None):
         note = self.get_object()
@@ -84,11 +93,32 @@ class TrashedNoteViewSet(viewsets.ModelViewSet):
     """
     serializer_class = NoteSerializer
     permission_classes = [permissions.IsAuthenticated]
-    # Çöp kutusunda genelde sadece listeleme ve kalıcı silme olur, ama şimdilik standart bırakalım.
+    # Sadece listeleme, geri getirme ve kalıcı silme işlemlerine izin verelim.
+    # Yeni not oluşturma (create) veya güncelleme (update) gibi işlemlere gerek yok.
+    http_method_names = ['get', 'post', 'delete', 'head', 'options']
+
     
     def get_queryset(self):
         # Sadece giriş yapan kullanıcının, is_deleted=True olan notlarını getir
         return Note.objects.filter(owner=self.request.user, is_deleted=True).order_by("-id")
+
+    @action(detail=True, methods=['post'], url_path='restore')
+    def restore(self, request, pk=None):
+        """
+        Çöp kutusundaki bir notu geri yükler.
+        """
+        note = self.get_object()
+        note.is_deleted = False
+        note.save()
+        return Response(status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Çöp kutusundaki bir notu kalıcı olarak siler (hard delete).
+        """
+        note = self.get_object()
+        note.delete() # Bu, veritabanından kalıcı olarak siler.
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TagCloudView(APIView):
