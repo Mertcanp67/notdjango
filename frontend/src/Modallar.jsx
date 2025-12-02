@@ -14,7 +14,7 @@ export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, i
             placeholder="Başlık"
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
-            style={{ padding: '12px 15px', fontSize: '1.1em' }}
+            style={{ padding: '12px 15px', fontSize: '1.1em' }} 
           />
           <textarea
             className="textarea"
