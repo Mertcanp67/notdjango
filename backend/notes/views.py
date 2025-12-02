@@ -100,15 +100,15 @@ class TagCloudView(APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
 
-        # Silinmemiş notlardaki etiketleri gösterelim
-        visible_notes = Note.objects.filter(
-            Q(owner=user) | Q(is_private=False),
-            is_deleted=False 
-        ).distinct()
-
         if user.is_staff:
             visible_notes = Note.objects.filter(is_deleted=False)
-        
+        else:
+            # Silinmemiş notlardaki etiketleri gösterelim
+            visible_notes = Note.objects.filter(
+                Q(owner=user) | Q(is_private=False),
+                is_deleted=False 
+            ).distinct()
+
         tags = Tag.objects.filter(
             note__in=visible_notes
         ).annotate(count=Count('note')).order_by('-count', 'name')
@@ -142,4 +142,4 @@ class TrendingTagsView(APIView):
         ).order_by('-count', 'name')[:10]
 
         serializer = TagSerializer(trending_tags, many=True, context={'request': request})
-        return Response(serializer.data)
+        return Response(serializer.data) 
