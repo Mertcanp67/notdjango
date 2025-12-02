@@ -52,7 +52,14 @@ export const listNotes = (search = "") => {
 };
 export const createNote = (payload) => apiFetch("/api/notes/", { method: "POST", body: JSON.stringify(payload) });
 export const updateNote = (id, payload) => apiFetch(`/api/notes/${id}/`, { method: "PATCH", body: JSON.stringify(payload) });
-export const deleteNote = (id) => apiFetch(`/api/notes/${id}/`, { method: "DELETE" });
+export const trashNote = (id) => apiFetch(`/api/notes/${id}/`, { method: "DELETE" });
+
+// Çöp Kutusu için yeni fonksiyonlar
+export const listTrashedNotes = () => apiFetch("/api/trashed-notes/");
+export const restoreNote = (id) => apiFetch(`/api/trashed-notes/${id}/restore/`, { method: "POST" });
+export const deleteNotePermanently = (id) => apiFetch(`/api/trashed-notes/${id}/`, { method: "DELETE" });
+
+
 export const loginUser = (payload) => authFetch("/api/auth/login/", payload);
 export const registerUser = (payload) => authFetch("/api/auth/registration/", payload);
 export const listCategories = () => apiFetch("/api/categories/");

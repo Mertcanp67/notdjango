@@ -4,7 +4,7 @@ import {
   listNotes,
   createNote,
   updateNote,
-  deleteNote,
+  trashNote,
   authFetch,
   listCategories,
   listTags,
@@ -17,12 +17,14 @@ import { Toolbar } from "./AracCubugu.jsx";
 import { NoteList } from './NotListesi.jsx';
 import { AddNoteModal, EditNoteModal } from './Modallar.jsx';
 import { NoteStats } from "./NotIstatistikleri.jsx";
+import { CopKutusu } from "./CopKutusu.jsx";
 
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 
 export default function Uygulama() {
+  const [view, setView] = useState('main');
   const [notes, setNotes] = useState([]);
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
@@ -232,16 +234,16 @@ const onAdd = useCallback(async () => {
     }, 300);
   }, []);
 
-  const onDelete = useCallback(async (id) => {
+  const onTrash = useCallback(async (id) => {
     const prev = notes;
     setNotes(prev.filter((n) => n.id !== id));
     try {
       setError("");
-      await deleteNote(id);
+      await trashNote(id);
       reloadTags(); // Etiketleri yeniden yükle
-      showSuccess("Not başarıyla silindi!");
+      showSuccess("Not başarıyla çöpe taşındı!");
     } catch (e) {
-      setError("Silme başarısız: Yetkiniz olmayabilir. " + e.message);
+      setError("Çöpe taşıma başarısız: " + e.message);
       setNotes(prev);
     }
   }, [notes, reloadTags]);
@@ -360,7 +362,12 @@ const onAdd = useCallback(async () => {
           </div>
 
           <div className="main-layout-right">
-            <Toolbar search={search} setSearch={setSearch} onAddNoteClick={() => setIsAddModalOpen(true)} />
+            <Toolbar 
+              search={search} 
+              setSearch={setSearch} 
+              onAddNoteClick={() => setIsAddModalOpen(true)}
+              onSwitchToTrashView={() => setView('trash')}
+            />
 
             {loading && <p className="footer-muted">Yükleniyor…</p>}
             {error && (
@@ -369,23 +376,33 @@ const onAdd = useCallback(async () => {
               </p>
             )}
 
-            <NoteList
-              notes={notes}
-              setNotes={setNotes}
-              filteredNotes={filteredNotes}
-              activeFilter={selectedTag}
-              onSave={onSave}
-              onStartEdit={handleStartEdit}
-              onDelete={onDelete}
-              onTagClick={(tag) => setSelectedTag(tag)}
-              currentUser={currentUser}
-              draggedNoteId={draggedNoteId}
-              dragOverNoteId={dragOverNoteId}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              isAdmin={isAdmin} 
-            />
+            {view === 'main' ? (
+              <NoteList
+                notes={notes}
+                setNotes={setNotes}
+                filteredNotes={filteredNotes}
+                activeFilter={selectedTag}
+                onSave={onSave}
+                onStartEdit={handleStartEdit}
+                onTrash={onTrash}
+                onTagClick={(tag) => setSelectedTag(tag)}
+                currentUser={currentUser}
+                draggedNoteId={draggedNoteId}
+                dragOverNoteId={dragOverNoteId}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                isAdmin={isAdmin} 
+              />
+            ) : (
+              <CopKutusu 
+                onSwitchToMainView={() => {
+                  setView('main');
+                  load(); // Notları yeniden yükle
+                }}
+                onNoteRestored={() => showSuccess("Not başarıyla geri getirildi!")}
+              />
+            )}
           </div>
 
         </div>

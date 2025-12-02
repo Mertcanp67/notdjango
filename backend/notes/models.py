@@ -12,7 +12,8 @@ class Note(models.Model):
     content = models.TextField(blank=True, null=True) 
     created_at = models.DateTimeField(auto_now_add=True)
     tags = TaggableManager(blank=True)
-    is_private = models.BooleanField(default=False) 
+    is_private = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(default=False)
 
     category = models.ForeignKey(
         'Category', 

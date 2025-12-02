@@ -8,15 +8,15 @@ from datetime import timedelta
 from .models import Note, Category
 from .serializers import NoteSerializer, CategorySerializer, TagSerializer
 from .permissions import IsOwnerOrReadOnly
-from .filters import NoteFilter # Oluşturduğumuz filtreyi import ediyoruz
-from taggit.models import Tag, TaggedItem # Tag modelini import ettiğinden emin ol
+from .filters import NoteFilter 
+from taggit.models import Tag, TaggedItem 
 
 
 class NoteViewSet(viewsets.ModelViewSet):
     serializer_class = NoteSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filterset_class = NoteFilter # Filtre setimizi burada tanımlıyoruz
-    filter_backends = [filters.SearchFilter] # Arama özelliğini koruyoruz
+    filterset_class = NoteFilter 
+    filter_backends = [filters.SearchFilter] 
     search_fields = ["title", "content", "owner__username", "tags__name"]
 
     def get_permissions(self):
@@ -26,10 +26,14 @@ class NoteViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        # Admin ise hepsini görsün (isteğe bağlı) veya sadece silinmemişleri görsün
+        # Normal listede is_deleted=False olanları getirmeliyiz ki çöptekiler ana sayfada çıkmasın.
+        base_query = Note.objects.filter(is_deleted=False) 
+        
         if user.is_staff:
-            return Note.objects.all().order_by("-id")
+            return base_query.order_by("-id")
 
-        return Note.objects.filter(
+        return base_query.filter(
             Q(owner=user) | 
             Q(is_private=False)
         ).distinct().order_by("-id")
@@ -39,32 +43,25 @@ class NoteViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='related')
     def related_notes(self, request, pk=None):
-        """
-        Belirli bir nota ait etiketlerle ilişkili diğer notları döndürür.
-        """
         note = self.get_object()
-        
-        # Notun etiketlerini al
         tag_ids = note.tags.values_list('id', flat=True)
 
         if not tag_ids:
-            # Eğer notun hiç etiketi yoksa, boş liste döndür
             return Response([])
 
-        # Bu etiketlerden herhangi birine sahip olan, ancak mevcut notun kendisi olmayan notları bul
-        # Ayrıca kullanıcının görme yetkisi olan notları (kendisininkiler veya public olanlar) filtrele
         user = request.user
         related_notes = Note.objects.filter(
-            tags__in=tag_ids
+            tags__in=tag_ids,
+            is_deleted=False  # Çöptekiler ilişkili notlarda çıkmasın
         ).exclude(
             pk=note.pk
         ).filter(
             Q(owner=user) | Q(is_private=False)
-        ).distinct().order_by("-id")[:10] # Sonuçları 10 ile sınırla
+        ).distinct().order_by("-id")[:10]
 
-        # İlişkili notları serialize et
         serializer = self.get_serializer(related_notes, many=True)
         return Response(serializer.data)
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     """
@@ -74,12 +71,25 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
 
     def get_queryset(self):
-        # DÜZELTME: Sadece kullanıcıya ait kategorileri getir
+        # Sadece kullanıcıya ait kategorileri getir
         return Category.objects.filter(owner=self.request.user).order_by("-id")
 
-    # DÜZELTME: Bu fonksiyon get_queryset'in dışına çıkarıldı (girinti düzeltildi)
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+
+class TrashedNoteViewSet(viewsets.ModelViewSet):
+    """
+    Çöp kutusundaki (silinmiş işaretlenen) notları yönetir.
+    """
+    serializer_class = NoteSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    # Çöp kutusunda genelde sadece listeleme ve kalıcı silme olur, ama şimdilik standart bırakalım.
+    
+    def get_queryset(self):
+        # Sadece giriş yapan kullanıcının, is_deleted=True olan notlarını getir
+        return Note.objects.filter(owner=self.request.user, is_deleted=True).order_by("-id")
+
 
 class TagCloudView(APIView):
     """
@@ -90,25 +100,24 @@ class TagCloudView(APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
 
-        # Kullanıcının görebileceği notları (kendisininkiler ve herkese açık olanlar) filtrele
-        visible_notes = Note.objects.filter(Q(owner=user) | Q(is_private=False)).distinct()
+        # Silinmemiş notlardaki etiketleri gösterelim
+        visible_notes = Note.objects.filter(
+            Q(owner=user) | Q(is_private=False),
+            is_deleted=False 
+        ).distinct()
 
-        # Admin ise tüm notları dikkate al
         if user.is_staff:
-            visible_notes = Note.objects.all()
+            visible_notes = Note.objects.filter(is_deleted=False)
         
-        # Taggit'in `tag_counts()` metodunu kullanarak etiketleri ve sayılarını al
-        # DÜZELTME: `tag_counts` metodu bulunmuyor. Doğru yöntem, Tag modelini
-        # `visible_notes` ile ilişkilendirerek filtrelemek ve saymaktır.
         tags = Tag.objects.filter(
             note__in=visible_notes
         ).annotate(count=Count('note')).order_by('-count', 'name')
         
-        # En popüler 50 etiketi al
         top_tags = tags[:50]
         tag_data = [{'name': tag.name, 'count': tag.count} for tag in top_tags if tag.count > 0]
         
         return Response(tag_data)
+
 
 class TrendingTagsView(APIView):
     """
@@ -120,18 +129,17 @@ class TrendingTagsView(APIView):
         user = request.user
         thirty_days_ago = timezone.now() - timedelta(days=30)
 
-        # Kullanıcının görebileceği ve son 30 günde oluşturulmuş notları filtrele
         visible_notes = Note.objects.filter(
             Q(owner=user) | Q(is_private=False),
-            created_at__gte=thirty_days_ago
+            created_at__gte=thirty_days_ago,
+            is_deleted=False
         ).distinct()
 
-        # Bu notlarla ilişkili etiketleri say
         trending_tags = Tag.objects.filter(
             note__in=visible_notes
         ).annotate(
             count=Count('note')
-        ).order_by('-count', 'name')[:10] # En popüler 10 tanesini al
+        ).order_by('-count', 'name')[:10]
 
         serializer = TagSerializer(trending_tags, many=True, context={'request': request})
         return Response(serializer.data)

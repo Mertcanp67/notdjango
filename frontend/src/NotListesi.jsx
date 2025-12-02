@@ -2,7 +2,7 @@ import React from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { EditableNote } from './DuzenlenebilirNot';
 
-export function NoteList({ notes, setNotes, filteredNotes, activeFilter, onSave, onStartEdit, onDelete, onTagClick, currentUser, isAdmin }) {
+export function NoteList({ notes, setNotes, filteredNotes, activeFilter, onSave, onStartEdit, onTrash, onTagClick, currentUser, isAdmin }) {
 
   const handleDragEnd = (result) => {
     const { destination, source } = result;
@@ -26,7 +26,7 @@ export function NoteList({ notes, setNotes, filteredNotes, activeFilter, onSave,
                 const noteClass = activeFilter ? (isVisible ? 'filtered-in' : 'filtered-out') : '';
                 return (
                   <Draggable key={n.id} draggableId={n.id.toString()} index={index}>
-                    {(provided, snapshot) => ( <EditableNote ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} note={n} onSave={onSave} onStartEdit={onStartEdit} onDelete={onDelete} onTagClick={onTagClick} currentUser={currentUser} isAdmin={isAdmin} animationDelay={index * 50} extraClassName={`${noteClass} ${snapshot.isDragging ? 'dragging' : ''}`} />
+                    {(provided, snapshot) => ( <EditableNote ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} note={n} onSave={onSave} onStartEdit={onStartEdit} onTrash={onTrash} onTagClick={onTagClick} currentUser={currentUser} isAdmin={isAdmin} animationDelay={index * 50} extraClassName={`${noteClass} ${snapshot.isDragging ? 'dragging' : ''}`} />
 )}
                   </Draggable>
                 );

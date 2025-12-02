@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { CategoryMap } from "./sabitler.jsx";
-import ReactMarkdown from 'react-markdown';
 
 // Etiketlere tutarlı ama rastgele renkler atamak için bir yardımcı fonksiyon
 const stringToHslColor = (str, s, l) => {
@@ -13,17 +12,17 @@ const stringToHslColor = (str, s, l) => {
   return `hsl(${h}, ${s}%, ${l}%)`;
 };
 
-const EditableNoteComponent = React.forwardRef(({ note, onStartEdit, onDelete, onTagClick, currentUser, isAdmin, animationDelay, extraClassName, ...props }, ref) => {
+const EditableNoteComponent = React.forwardRef(({ note, onStartEdit, onTrash, onTagClick, currentUser, isAdmin, animationDelay, extraClassName, ...props }, ref) => {
     const [showConfirm, setShowConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false); 
     const [isClosingConfirm, setIsClosingConfirm] = useState(false); 
   
-    const handleDeleteWithAnimation = () => {
+    const handleTrashWithAnimation = () => {
       setIsDeleting(true); 
       setShowConfirm(false);
   
       setTimeout(() => {
-        onDelete(note.id);
+        onTrash(note.id);
       }, 400); 
     };
 
@@ -75,7 +74,7 @@ const EditableNoteComponent = React.forwardRef(({ note, onStartEdit, onDelete, o
                     Düzenle
                   </button>
                 <button className="btn danger" onClick={() => setShowConfirm(true)}>
-                  Sil
+                  Çöpe Taşı
                 </button>
               </>
             ) : (
@@ -88,9 +87,7 @@ const EditableNoteComponent = React.forwardRef(({ note, onStartEdit, onDelete, o
   
         <div style={{ marginTop: 12 }}>
           {note.content && (
-            <div className="markdown-content">
-              <ReactMarkdown>{note.content}</ReactMarkdown>
-            </div>
+            <div className="ql-editor" dangerouslySetInnerHTML={{ __html: note.content }} />
           )}
         </div>
 
@@ -115,10 +112,10 @@ const EditableNoteComponent = React.forwardRef(({ note, onStartEdit, onDelete, o
       {showConfirm && (
           <div className={`delete-confirm-overlay ${isClosingConfirm ? 'closing' : ''}`}>
             <div className={`delete-confirm-box ${isClosingConfirm ? 'closing' : ''}`}>
-                <p>Bu notu kalıcı olarak silmek istediğinize emin misiniz?</p>
+                <p>Bu notu çöpe taşımak istediğinize emin misiniz?</p>
                 <div className="note-actions">
-                    <button className="btn danger" onClick={handleDeleteWithAnimation}>
-                        Evet, Sil
+                    <button className="btn danger" onClick={handleTrashWithAnimation}>
+                        Evet, Taşı
                     </button>
                     <button className="btn secondary" onClick={handleCloseConfirm}>
                         Vazgeç

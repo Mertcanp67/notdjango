@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button, Modal, Form } from "react-bootstrap";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 import { createNote, listCategories } from "./api";
 
 function AddNoteModal({ show, onHide, onNoteAdded }) {
@@ -54,15 +56,14 @@ function AddNoteModal({ show, onHide, onNoteAdded }) {
               required
             />
           </Form.Group>
-          <Form.Group>
+          <Form.Group className="mb-3">
             <Form.Label>İçerik</Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={3}
+            <ReactQuill
+              theme="snow"
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              required
-            />
+              onChange={setContent}
+              style={{ height: "150px" }}
+             />
           </Form.Group>
           <Form.Group>
             <Form.Label>Kategori</Form.Label>
@@ -87,7 +88,7 @@ function AddNoteModal({ show, onHide, onNoteAdded }) {
               onChange={(e) => setTags(e.target.value)}
             />
           </Form.Group>
-          <Button variant="primary" type="submit" className="mt-3">
+          <Button variant="primary" type="submit" className="mt-5">
             Ekle
           </Button>
         </Form>
