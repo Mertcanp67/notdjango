@@ -110,7 +110,9 @@ class TrashedNoteViewSet(viewsets.ModelViewSet):
         note = self.get_object()
         note.is_deleted = False
         note.save()
-        return Response(status=status.HTTP_200_OK)
+        # Başarılı olduğunda boş yanıt yerine, geri yüklenen notun
+        # güncel verisini veya basit bir başarı mesajı döndür.
+        return Response({'status': 'note restored'}, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         """
