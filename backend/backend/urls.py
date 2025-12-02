@@ -1,24 +1,16 @@
 
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
 from django.views.generic import TemplateView
-from notes.views import NoteViewSet, CategoryViewSet, TagCloudView
-
-router = DefaultRouter()
-router.register("notes", NoteViewSet, basename="note")
-router.register("categories", CategoryViewSet, basename="category")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
 
     path("api/auth/registration/", include("dj_rest_auth.registration.urls")),
-
     path("api/auth/", include("dj_rest_auth.urls")),
     
-    path("api/tags/", TagCloudView.as_view(), name='tag-cloud'),
-
-    path("api/", include(router.urls)),
+    # api/ ile başlayan tüm istekleri notes uygulamasının urls.py dosyasına yönlendir
+    path("api/", include("notes.urls")),
 
     path("", TemplateView.as_view(template_name="index.html"))
 
