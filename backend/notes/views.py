@@ -208,7 +208,7 @@ class AITagGeneratorView(APIView):
             # "prompt should not be empty" hatasını önlemek için yapılandırıldı.
             # Bu, modelin daha esnek çalışmasını sağlar.
             model = genai.GenerativeModel(
-                "gemini-1.5-flash",
+                "gemini-pro",
                 safety_settings={
                     'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
                     'HARM_CATEGORY_HATE_SPEECH': 'BLOCK_NONE',
