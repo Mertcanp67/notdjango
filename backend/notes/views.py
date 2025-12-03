@@ -1,3 +1,5 @@
+import google.generativeai as genai
+from django.conf import settings 
 from rest_framework import viewsets, filters, permissions, status
 from rest_framework.views import APIView
 from rest_framework.decorators import action
@@ -10,6 +12,8 @@ from .serializers import NoteSerializer, CategorySerializer, TagSerializer
 from .permissions import IsOwnerOrReadOnly
 from .filters import NoteFilter 
 from taggit.models import Tag, TaggedItem 
+    
+
 
 
 class NoteViewSet(viewsets.ModelViewSet):
@@ -175,3 +179,55 @@ class TrendingTagsView(APIView):
 
         serializer = TagSerializer(trending_tags, many=True, context={'request': request})
         return Response(serializer.data) 
+class AITagGeneratorView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        title = request.data.get("title", "")
+        content = request.data.get("content", "")
+        
+        # Mantık Düzeltmesi: Başlık VE İçerik ikisi de yoksa hata ver.
+        # Biri bile varsa çalışsın.
+        if not title and not content:
+            return Response({"error": "Başlık veya içerik gerekli"}, status=400)
+
+        # Yazım hataları düzeltildi
+        prompt = f"""
+        Aşağıdaki metni analiz et ve Türkçe olarak en uygun 3 ila 5 etiketi bul.
+        Sadece etiketleri virgül ile ayırarak yaz. Başka hiçbir açıklama yapma.
+        
+        Başlık: {title}
+        İçerik: {content}
+        """
+
+        try:
+            # DÜZELTME: API çağrısı yapmadan önce Google AI kütüphanesini API anahtarı ile yapılandır.
+            genai.configure(api_key=settings.GOOGLE_API_KEY)
+
+            # DÜZELTME: Güvenlik ayarları, boş içerik gönderildiğinde oluşabilecek
+            # "prompt should not be empty" hatasını önlemek için yapılandırıldı.
+            # Bu, modelin daha esnek çalışmasını sağlar.
+            model = genai.GenerativeModel(
+                "gemini-1.5-flash",
+                safety_settings={
+                    'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
+                    'HARM_CATEGORY_HATE_SPEECH': 'BLOCK_NONE',
+                    'HARM_CATEGORY_SEXUALLY_EXPLICIT': 'BLOCK_NONE',
+                    'HARM_CATEGORY_DANGEROUS_CONTENT': 'BLOCK_NONE',
+                }
+            )
+            
+            # DÜZELTME: Değişken adı 'response' DRF'in Response sınıfı ile çakıştığı için 'gemini_response' olarak değiştirildi.
+            gemini_response = model.generate_content(prompt) 
+            
+            tags_text = gemini_response.text.strip() 
+            
+            # Virgülle ayır ve temizle
+            tags = [tag.strip() for tag in tags_text.split(",") if tag.strip()]
+            
+            return Response({"tags": tags}, status=200)
+            
+        except Exception as e:
+            # Hata durumunda konsola yazdıralım ki ne olduğunu görelim
+            print(f"AI Hatası: {str(e)}")
+            return Response({"error": "Etiketler oluşturulamadı."}, status=500)    

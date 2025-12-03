@@ -1,7 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TagInput } from './TagInput';
+import { generateAITags } from './api'; // <--- API fonksiyonunu import ettik
 
 export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, isClosing, allTags = [] }) {
+  // --- AI STATE VE FONKSİYONU BAŞLANGIÇ ---
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const handleAITagging = async () => {
+    if (!form.title && !form.content) {
+      alert("Yapay zeka analizi için lütfen önce bir Başlık veya İçerik girin.");
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      // Backend'e metni gönderiyoruz
+      const res = await generateAITags({ title: form.title, content: form.content });
+      
+      // Gelen etiketleri mevcutların üzerine ekliyoruz (Tekrar edenleri Set ile temizliyoruz)
+      const currentTags = form.tags || [];
+      const newTags = [...new Set([...currentTags, ...res.tags])];
+      
+      setForm({ ...form, tags: newTags });
+      
+    } catch (error) {
+      console.error("AI Hatası:", error);
+      alert("Etiket üretilemedi. Lütfen tekrar deneyin.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+  // --- AI KODU BİTİŞ ---
+
   if (!isOpen) return null;
 
   return (
@@ -14,7 +44,7 @@ export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, i
             placeholder="Başlık"
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
-            style={{ padding: '12px 15px', fontSize: '1.1em' }} 
+            style={{ padding: '12px 15px', fontSize: '1.1em' }}
           />
           <textarea
             className="textarea"
@@ -24,6 +54,37 @@ export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, i
             onChange={(e) => setForm({ ...form, content: e.target.value })}
             style={{ padding: '12px 15px', fontSize: '1.05em' }}
           />
+
+          {/* --- YAPAY ZEKA BUTONU --- */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '-10px', marginTop: '5px' }}>
+            <button
+              type="button" // Formu submit etmemesi için şart
+              onClick={handleAITagging}
+              disabled={aiLoading}
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // Mor geçişli renk
+                color: 'white',
+                border: 'none',
+                borderRadius: '20px',
+                padding: '6px 12px',
+                fontSize: '0.85em',
+                cursor: aiLoading ? 'wait' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontWeight: '600',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                transition: 'transform 0.1s'
+              }}
+            >
+              {aiLoading ? (
+                <>⏳ Analiz Ediliyor...</>
+              ) : (
+                <>✨ Yapay Zeka ile Etiketle</>
+              )}
+            </button>
+          </div>
+          {/* ------------------------- */}
 
           <TagInput tags={form.tags || []} setTags={(newTags) => setForm({ ...form, tags: newTags })} />
 
@@ -83,6 +144,33 @@ export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, i
 }
 
 export function EditNoteModal({ isOpen, onClose, note, setNote, onSave, loading, isClosing, allTags = [] }) {
+  // --- AI STATE VE FONKSİYONU (Edit Modal İçin) ---
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const handleAITagging = async () => {
+    if (!note.title && !note.content) {
+      alert("Yapay zeka analizi için lütfen önce bir Başlık veya İçerik girin.");
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const res = await generateAITags({ title: note.title, content: note.content });
+      
+      const currentTags = note.tags || [];
+      const newTags = [...new Set([...currentTags, ...res.tags])];
+      
+      setNote({ ...note, tags: newTags });
+      
+    } catch (error) {
+      console.error("AI Hatası:", error);
+      alert("Etiket üretilemedi. Lütfen tekrar deneyin.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+  // ------------------------------------------------
+
   if (!isOpen || !note) return null;
 
   return (
@@ -105,6 +193,37 @@ export function EditNoteModal({ isOpen, onClose, note, setNote, onSave, loading,
             onChange={(e) => setNote({ ...note, content: e.target.value })}
             style={{ padding: '12px 15px', fontSize: '1.05em' }}
           />
+
+          {/* --- YAPAY ZEKA BUTONU (Edit Modal) --- */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '-10px', marginTop: '5px' }}>
+            <button
+              type="button"
+              onClick={handleAITagging}
+              disabled={aiLoading}
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '20px',
+                padding: '6px 12px',
+                fontSize: '0.85em',
+                cursor: aiLoading ? 'wait' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontWeight: '600',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                transition: 'transform 0.1s'
+              }}
+            >
+              {aiLoading ? (
+                <>⏳ Analiz Ediliyor...</>
+              ) : (
+                <>✨ Yapay Zeka ile Etiketle</>
+              )}
+            </button>
+          </div>
+          {/* -------------------------------------- */}
 
           <TagInput tags={note.tags || []} setTags={(newTags) => setNote({ ...note, tags: newTags })} />
 

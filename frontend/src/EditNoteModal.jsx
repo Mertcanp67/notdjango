@@ -95,7 +95,7 @@ function EditNoteModal({ show, onHide, onNoteUpdated, note }) {
               value={tags}
               onChange={(e) => setTags(e.target.value)}
             />
-          </Form.Grup>
+          </Form.Group>
           <Button variant="primary" type="submit" className="mt-3">
             Güncelle
           </Button>

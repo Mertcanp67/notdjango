@@ -10,10 +10,9 @@ class TagSerializer(serializers.ModelSerializer):
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Category
+        model = Category    
         fields = ['id', 'name', 'color']
         read_only_fields = ['owner']
-
 
 class NoteSerializer(TaggitSerializer, serializers.ModelSerializer):
     owner = serializers.CharField(source="owner.username", read_only=True)
@@ -22,6 +21,17 @@ class NoteSerializer(TaggitSerializer, serializers.ModelSerializer):
     category_id = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(), source='category', write_only=True, required=False, allow_null=True
     )
+    
+    # İleride HTML temizliği (Sanitization) yapmak istersen bu listeleri kullanabilirsin.
+    ALLOWED_TAGS = [
+        "p", "strong", "em", "ul", "ol", "li", "br", "h1", "h2",
+        "a", "img",
+    ]
+    ALLOWED_ATTRIBUTES = {
+        "*": ["class"], 
+        "a": ["href", "title"],
+        "img": ["src", "alt", "style"],
+    }
 
     class Meta:
         model = Note
