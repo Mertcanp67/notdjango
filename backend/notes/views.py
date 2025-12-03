@@ -218,9 +218,17 @@ class AITagGeneratorView(APIView):
             )
             
             # DÜZELTME: Değişken adı 'response' DRF'in Response sınıfı ile çakıştığı için 'gemini_response' olarak değiştirildi.
-            gemini_response = model.generate_content(prompt) 
+            gemini_response = model.generate_content(prompt)
             
-            tags_text = gemini_response.text.strip() 
+            # DÜZELTME: Modelin cevabının engellenip engellenmediğini kontrol et.
+            # Eğer .text'e erişmeye çalışırken hata alırsak, bu genellikle cevabın
+            # güvenlik nedeniyle engellendiği anlamına gelir.
+            try:
+                tags_text = gemini_response.text.strip()
+            except ValueError:
+                # Cevap engellendiğinde veya boş olduğunda bu hata fırlatılır.
+                print(f"AI Hatası: Modelden geçerli bir metin yanıtı alınamadı. Yanıt: {gemini_response.prompt_feedback}")
+                return Response({"error": "Yapay zeka, sağlanan içerik için etiket üretemedi. Lütfen metni değiştirip tekrar deneyin."}, status=status.HTTP_400_BAD_REQUEST)
             
             # Virgülle ayır ve temizle
             tags = [tag.strip() for tag in tags_text.split(",") if tag.strip()]
@@ -228,6 +236,9 @@ class AITagGeneratorView(APIView):
             return Response({"tags": tags}, status=200)
             
         except Exception as e:
-            # Hata durumunda konsola yazdıralım ki ne olduğunu görelim
-            print(f"AI Hatası: {str(e)}")
-            return Response({"error": "Etiketler oluşturulamadı."}, status=500)    
+            # Hata durumunda konsola daha detaylı yazdıralım.
+            error_message = f"Gemini API hatası: {str(e)}"
+            print(error_message)
+            # Frontend'e de daha açıklayıcı bir hata gönderelim.
+            # Bu, API anahtarı veya faturalandırma sorunlarını teşhis etmeye yardımcı olur.
+            return Response({"error": "Yapay zeka servisine bağlanırken bir sorun oluştu. Lütfen API anahtarınızı ve ayarlarınızı kontrol edin."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
