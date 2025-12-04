@@ -22,7 +22,6 @@ class NoteSerializer(TaggitSerializer, serializers.ModelSerializer):
         queryset=Category.objects.all(), source='category', write_only=True, required=False, allow_null=True
     )
     
-    # İleride HTML temizliği (Sanitization) yapmak istersen bu listeleri kullanabilirsin.
     ALLOWED_TAGS = [
         "p", "strong", "em", "ul", "ol", "li", "br", "h1", "h2",
         "a", "img",

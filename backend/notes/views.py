@@ -11,10 +11,14 @@ from .models import Note, Category
 from .serializers import NoteSerializer, CategorySerializer, TagSerializer
 from .permissions import IsOwnerOrReadOnly
 from .filters import NoteFilter 
-from taggit.models import Tag, TaggedItem 
-    
+from taggit.models import Tag
 
-
+# --- API AYARINI EN ÜSTE KOYUYORUZ (DOĞRUSU BU) ---
+try:
+    genai.configure(api_key=settings.GOOGLE_API_KEY)
+except Exception as e:
+    print(f"Google API Key Hatası: {e}")
+# --------------------------------------------------
 
 class NoteViewSet(viewsets.ModelViewSet):
     serializer_class = NoteSerializer
@@ -44,9 +48,6 @@ class NoteViewSet(viewsets.ModelViewSet):
         serializer.save(owner=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
-        """
-        Bir notu kalıcı olarak silmek yerine 'is_deleted' olarak işaretler (soft delete).
-        """
         note = self.get_object()
         note.is_deleted = True
         note.save()
@@ -63,7 +64,7 @@ class NoteViewSet(viewsets.ModelViewSet):
         user = request.user
         related_notes = Note.objects.filter(
             tags__in=tag_ids,
-            is_deleted=False  
+            is_deleted=False
         ).exclude(
             pk=note.pk
         ).filter(
@@ -75,9 +76,6 @@ class NoteViewSet(viewsets.ModelViewSet):
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
-    """
-    Kullanıcının kendi kategorilerini yönetmesi için API endpoint'i.
-    """
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
 
@@ -89,40 +87,27 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class TrashedNoteViewSet(viewsets.ModelViewSet):
-    """
-    Çöp kutusundaki (silinmiş işaretlenen) notları yönetir.
-    """
     serializer_class = NoteSerializer
     permission_classes = [permissions.IsAuthenticated]
     http_method_names = ['get', 'post', 'delete', 'head', 'options']
-
     
     def get_queryset(self):
         return Note.objects.filter(owner=self.request.user, is_deleted=True).order_by("-id")
 
     @action(detail=True, methods=['post'], url_path='restore')
     def restore(self, request, pk=None):
-        """
-        Çöp kutusundaki bir notu geri yükler.
-        """
         note = self.get_object()
         note.is_deleted = False
         note.save()
         return Response({'status': 'note restored'}, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
-        """
-        Çöp kutusundaki bir notu kalıcı olarak siler (hard delete).
-        """
         note = self.get_object()
         note.delete() 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TagCloudView(APIView):
-    """
-    Kullanıcının notlarına göre etiket bulutu verisi döndürür.
-    """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
@@ -147,9 +132,6 @@ class TagCloudView(APIView):
 
 
 class TrendingTagsView(APIView):
-    """
-    Son 30 gün içinde en çok kullanılan etiketleri döndürür.
-    """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
@@ -170,6 +152,7 @@ class TrendingTagsView(APIView):
 
         serializer = TagSerializer(trending_tags, many=True, context={'request': request})
         return Response(serializer.data) 
+
 class AITagGeneratorView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -189,31 +172,19 @@ class AITagGeneratorView(APIView):
         """
 
         try:
-            genai.configure(api_key=settings.GOOGLE_API_KEY)
-
-            model = genai.GenerativeModel(
-                "gemini-1.5-flash",
-                safety_settings={
-                    'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
-                    'HARM_CATEGORY_HATE_SPEECH': 'BLOCK_NONE',
-                    'HARM_CATEGORY_SEXUALLY_EXPLICIT': 'BLOCK_NONE',
-                    'HARM_CATEGORY_DANGEROUS_CONTENT': 'BLOCK_NONE',
-                }
-            )
+            model = genai.GenerativeModel("gemini-1.0-pro")
             
             gemini_response = model.generate_content(prompt)
             
-            try:
-                tags_text = gemini_response.text.strip()
-            except ValueError:
-                print(f"AI Hatası: Modelden geçerli bir metin yanıtı alınamadı. Yanıt: {gemini_response.prompt_feedback}")
-                return Response({"error": "Yapay zeka, sağlanan içerik için etiket üretemedi. Lütfen metni değiştirip tekrar deneyin."}, status=status.HTTP_400_BAD_REQUEST)
+            if not gemini_response or not gemini_response.text:
+                 return Response({"error": "Yapay zeka yanıt veremedi."}, status=500)
+
+            tags_text = gemini_response.text.strip()
             
             tags = [tag.strip() for tag in tags_text.split(",") if tag.strip()]
             
             return Response({"tags": tags}, status=200)
             
         except Exception as e:
-            error_message = f"Gemini API hatası: {str(e)}"
-            print(error_message)
-            return Response({"error": "Yapay zeka servisine bağlanırken bir sorun oluştu. Lütfen API anahtarınızı ve ayarlarınızı kontrol edin."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            print(f"GEMINI API HATASI: {str(e)}")
+            return Response({"error": f"Yapay zeka servisine bağlanırken hata oluştu: {str(e)}"}, status=500)

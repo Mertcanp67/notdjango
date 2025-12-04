@@ -1,4 +1,3 @@
-// DİKKAT: Değişken tanımlamayı bıraktık. Adresi direkt aşağıya yazdık.
 
 export const apiFetch = async (url, options = {}) => {
   const token = localStorage.getItem("authToken");
@@ -8,7 +7,6 @@ export const apiFetch = async (url, options = {}) => {
     ...options.headers,
   };
 
-  // URL'yi direkt buraya yazdık.
   const res = await fetch(`https://notdjango.onrender.com${url}`, { ...options, headers });
 
   if (res.status === 401) {
@@ -43,7 +41,6 @@ export const authFetch = async (url, payload) => {
   return res.json();
 };
 
-// --- NOT İŞLEMLERİ ---
 export const listNotes = (search = "") => {
   const q = search ? `?search=${encodeURIComponent(search)}` : "";
   return apiFetch(`/api/notes/${q}`);
@@ -53,12 +50,9 @@ export const createNote = (payload) => apiFetch("/api/notes/", { method: "POST",
 
 export const updateNote = (id, payload) => apiFetch(`/api/notes/${id}/`, { method: "PATCH", body: JSON.stringify(payload) });
 
-// DÜZELTME: Uygulama.jsx içinde "trashNote" kullanıldığı için fonksiyonun adı değiştirildi.
-// Backend'de destroy metodu soft-delete yaptığı için bu işlem notu çöp kutusuna atar.
 export const trashNote = (id) => apiFetch(`/api/notes/${id}/`, { method: "DELETE" });
 
 
-// --- ÇÖP KUTUSU İŞLEMLERİ ---
 export const listTrashedNotes = () => apiFetch("/api/trashed-notes/");
 
 export const restoreNote = (id) => apiFetch(`/api/trashed-notes/${id}/restore/`, { method: "POST" });
@@ -66,7 +60,6 @@ export const restoreNote = (id) => apiFetch(`/api/trashed-notes/${id}/restore/`,
 export const deleteNotePermanently = (id) => apiFetch(`/api/trashed-notes/${id}/`, { method: "DELETE" });
 
 
-// --- DİĞER İŞLEMLER (Auth, Kategori, Etiket, AI) ---
 export const loginUser = (payload) => authFetch("/api/auth/login/", payload);
 
 export const registerUser = (payload) => authFetch("/api/auth/registration/", payload);
@@ -81,6 +74,5 @@ export const updateCategory = (id, payload) =>
 
 export const listTags = () => apiFetch("/api/tags/");
 
-// DÜZELTME: URL sonuna "/" (taksim) işareti eklendi.
 export const generateAITags = (payload) => 
   apiFetch("/api/generate-tags/", { method: "POST", body: JSON.stringify(payload) });

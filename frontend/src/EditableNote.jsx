@@ -111,5 +111,4 @@ const EditableNoteComponent = React.forwardRef(({ note, onStartEdit, onDelete, c
     );
 });
 
-// Performans için bileşeni memoize edelim.
 export const EditableNote = React.memo(EditableNoteComponent);

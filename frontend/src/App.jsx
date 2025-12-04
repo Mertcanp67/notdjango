@@ -1,30 +1,22 @@
 import React, { useState, useCallback } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { NotesList } from './NotesList'; // Ana not listesi bileşeniniz (varsayımsal)
+import { NotesList } from './NotesList'; 
 import { CopKutusu } from './CopKutusu';
-import './App.css'; // Genel stiller için bir CSS dosyası ekleyebilirsiniz
-
+import './App.css'; 
 export default function App() {
-  // 'main' (ana liste) ve 'trash' (çöp kutusu) arasında geçiş yapacak state
   const [view, setView] = useState('main');
   
-  // Not listesini yenilemek için bir state. 
-  // Bu değeri değiştirdiğinizde NotesList yeniden veri çeker.
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Not listesini yenileme fonksiyonu
   const refreshNotes = useCallback(() => {
     setRefreshKey(prevKey => prevKey + 1);
   }, []);
 
-  // Ana görünüme dönmek için CopKutusu bileşenine verilecek fonksiyon
   const switchToMainView = () => {
     setView('main');
-    // Ana listeye dönerken notların güncel halini görmek için listeyi yenileyebiliriz.
     refreshNotes();
   };
 
-  // Çöp kutusu görünümüne geçmek için fonksiyon
   const switchToTrashView = () => {
     setView('trash');
   };
@@ -53,22 +45,9 @@ export default function App() {
       ) : (
         <CopKutusu 
           onSwitchToMainView={switchToMainView} 
-          onNoteRestored={refreshNotes} // Not geri yüklendiğinde ana listeyi yenile
+          onNoteRestored={refreshNotes} 
         />
       )}
     </div>
   );
 }
-
-// Stil için App.css dosyası oluşturabilirsiniz
-/* 
-  // c:/Users/Mertcan/Desktop/notdjango/frontend/src/App.css
-
-  .app-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-  }
-
-*/

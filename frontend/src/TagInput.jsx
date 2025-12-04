@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 
-// Etiketlere tutarlı ama rastgele renkler atamak için bir yardımcı fonksiyon
 const stringToHslColor = (str, s, l) => {
   if (!str) return `hsl(0, 0%, 80%)`;
   let hash = 0;
@@ -20,23 +19,22 @@ export const TagInput = ({ tags, setTags }) => {
 
   const addTags = (newTags) => {
     const validTags = newTags
-      .split(/[\s,]+/) // Boşluk veya virgülle ayır
-      .map(tag => tag.trim().toLowerCase()) // Küçük harfe çevir ve boşlukları temizle
-      .filter(tag => tag.length > 0 && !tags.includes(tag)); // Boş ve tekrar eden etiketleri engelle
-    
+      .split(/[\s,]+/) 
+      .map(tag => tag.trim().toLowerCase()) 
+      .filter(tag => tag.length > 0 && !tags.includes(tag)); 
     if (validTags.length > 0) {
       setTags([...tags, ...validTags]);
     }
-    setInputValue(''); // Eklendikten sonra input'u temizle
+    setInputValue(''); 
   };
 
   const handleKeyDown = (e) => {
-    // Enter, boşluk veya virgül tuşuna basıldığında etiket ekle
+    
     if (e.key === 'Enter' || e.key === ' ' || e.key === ',') {
       e.preventDefault();
       addTags(inputValue);
     } else if (e.key === 'Backspace' && inputValue === '' && tags.length > 0) {
-      // Input boşken backspace'e basılırsa son etiketi sil
+      
       removeTag(tags.length - 1);
     }
   };

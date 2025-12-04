@@ -315,12 +315,9 @@ const onAdd = useCallback(async () => {
 
     setNotes(newNotes);
 
-    // TODO: Backend'de sıralamayı kaydetme özelliği eklendiğinde burası aktif edilecek.
-    // console.log("Yeni sıralama:", newNotes.map(n => n.id));
   };
 
   const filteredNotes = notes.filter(note => {
-    // note.tags'in bir dizi olduğundan emin olalım
     const tagMatch = selectedTag 
       ? Array.isArray(note.tags) && note.tags.includes(selectedTag) 
       : true;

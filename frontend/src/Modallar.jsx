@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { TagInput } from './TagInput';
-import { generateAITags } from './api'; // <--- API fonksiyonunu import ettik
+import { generateAITags } from './api'; 
 
 export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, isClosing, allTags = [] }) {
-  // --- AI STATE VE FONKSİYONU BAŞLANGIÇ ---
   const [aiLoading, setAiLoading] = useState(false);
 
   const handleAITagging = async () => {
@@ -14,10 +13,8 @@ export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, i
 
     setAiLoading(true);
     try {
-      // Backend'e metni gönderiyoruz
       const res = await generateAITags({ title: form.title, content: form.content });
       
-      // Gelen etiketleri mevcutların üzerine ekliyoruz (Tekrar edenleri Set ile temizliyoruz)
       const currentTags = form.tags || [];
       const newTags = [...new Set([...currentTags, ...res.tags])];
       
@@ -30,7 +27,6 @@ export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, i
       setAiLoading(false);
     }
   };
-  // --- AI KODU BİTİŞ ---
 
   if (!isOpen) return null;
 
@@ -144,7 +140,6 @@ export function AddNoteModal({ isOpen, onClose, form, setForm, onAdd, loading, i
 }
 
 export function EditNoteModal({ isOpen, onClose, note, setNote, onSave, loading, isClosing, allTags = [] }) {
-  // --- AI STATE VE FONKSİYONU (Edit Modal İçin) ---
   const [aiLoading, setAiLoading] = useState(false);
 
   const handleAITagging = async () => {
@@ -169,7 +164,6 @@ export function EditNoteModal({ isOpen, onClose, note, setNote, onSave, loading,
       setAiLoading(false);
     }
   };
-  // ------------------------------------------------
 
   if (!isOpen || !note) return null;
 

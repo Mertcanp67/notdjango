@@ -12,10 +12,8 @@ class NoteFilter(filters.FilterSet):
     """
     Note modeli için filtre seti.
     """
-    # 'tags' query parametresini 'tags__name__in' sorgusuna çevirir.
     tags = CharInFilter(field_name='tags__name', lookup_expr='in')
 
-    # Ayrıca kategori ismine göre de filtreleme ekleyebiliriz.
     category = filters.CharFilter(field_name='category__name', lookup_expr='icontains')
 
     class Meta:

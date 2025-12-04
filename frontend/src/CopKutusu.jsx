@@ -48,7 +48,7 @@ export function CopKutusu({ onSwitchToMainView, onNoteRestored }) {
     try {
       await restoreNote(id);
       setTrashedNotes(prev => prev.filter(n => n.id !== id));
-      onNoteRestored(); // Ana listeyi yenilemesi için üst bileşeni bilgilendir
+      onNoteRestored(); 
     } catch (err) {
       setError('Not geri getirilemedi: ' + err.message);
     }

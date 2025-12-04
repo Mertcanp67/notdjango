@@ -32,12 +32,11 @@ class Note(models.Model):
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
-    color = models.CharField(max_length=7, default="#808080") # Hex color code
+    color = models.CharField(max_length=7, default="#808080") 
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="categories")
 
     class Meta:
         verbose_name_plural = "Categories"
-        unique_together = ('owner', 'name') # Bir kullanıcının aynı isimde iki kategorisi olamaz
-
+        unique_together = ('owner', 'name') ,
     def __str__(self):
         return f"{self.name} ({self.owner.username})"

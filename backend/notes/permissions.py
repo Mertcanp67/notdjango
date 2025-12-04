@@ -6,7 +6,6 @@ class IsOwnerOrReadOnly(BasePermission):
     ancak adminler her zaman tam yetkiye sahiptir.
     """
     def has_object_permission(self, request, view, obj):
-        # Admin kullanıcılar her şeyi yapabilir.
         if request.user and request.user.is_staff:
             return True
 

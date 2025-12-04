@@ -40,7 +40,6 @@ export function NoteStats({ notes, categories = [], tags = [], onTagClick, selec
                 <div
                   key={cat.id}
                   className={`stat-item`}
-                  // onClick={() => handleFilterClick(cat.id)}
                 >
                   <div style={{ fontWeight: 'bold', color: cat.color, flexGrow: 1 }}>{cat.name}</div>
                   <div style={{ fontSize: '1.1em', fontWeight: 'bold' }}>{total}</div>

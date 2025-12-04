@@ -30,34 +30,33 @@ const GlassmorphicCard = styled(Card)(({ theme }) => ({
   maxWidth: 420,
   overflow: 'hidden',
   borderRadius: '16px',
-  background: 'rgba(10, 25, 41, 0.7)', // More bluish background
+  background: 'rgba(10, 25, 41, 0.7)', 
   backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(110, 168, 254, 0.2)', // Blueish border
+  border: '1px solid rgba(110, 168, 254, 0.2)', 
   boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
 }));
 
 const StyledTextField = styled(TextField)(({ theme }) => ({
   '& .MuiOutlinedInput-root': {
     '& fieldset': {
-      borderColor: 'rgba(110, 168, 254, 0.3)', // Blueish border
+      borderColor: 'rgba(110, 168, 254, 0.3)', 
     },
     '&:hover fieldset': {
-      borderColor: 'rgba(110, 168, 254, 0.6)', // Lighter blueish border on hover
+      borderColor: 'rgba(110, 168, 254, 0.6)', 
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#6ea8fe', // Keep the focused color
+      borderColor: '#6ea8fe', 
     },
     '& input': {
       color: '#e6eefc',
     },
   },
   '& .MuiInputLabel-root': {
-    color: 'rgba(230, 238, 252, 0.7)', // Lighter label color
+    color: 'rgba(230, 238, 252, 0.7)', 
   },
   '& .MuiInputLabel-root.Mui-focused': {
     color: '#6ea8fe',
   },
-  // Etiket küçüldüğünde (yani içine yazı yazıldığında) arkaplan ekleyelim
   '& .MuiInputLabel-shrink': {
     background: 'radial-gradient(circle, rgba(10, 25, 41, 1) 60%, transparent 65%)',
     paddingRight: '4px',
