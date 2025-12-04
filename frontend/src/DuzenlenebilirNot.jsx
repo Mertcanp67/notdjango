@@ -103,7 +103,7 @@ const EditableNoteComponent = React.forwardRef(({ note, onStartEdit, onTrash, on
                   color: stringToHslColor(tag, 50, 85)
                 }}
               >
-                #{tag}
+                #{tag.replace(/^#/, '')}
               </button>
             ))}
           </div>
