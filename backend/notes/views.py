@@ -1,5 +1,4 @@
 import google.generativeai as genai
-from django.conf import settings 
 from rest_framework import viewsets, filters, permissions, status
 from rest_framework.views import APIView
 from rest_framework.decorators import action
@@ -12,13 +11,6 @@ from .serializers import NoteSerializer, CategorySerializer, TagSerializer
 from .permissions import IsOwnerOrReadOnly
 from .filters import NoteFilter 
 from taggit.models import Tag
-
-# --- API AYARINI EN ÜSTE KOYUYORUZ (DOĞRUSU BU) ---
-try:
-    genai.configure(api_key=settings.GOOGLE_API_KEY)
-except Exception as e:
-    print(f"Google API Key Hatası: {e}")
-# --------------------------------------------------
 
 class NoteViewSet(viewsets.ModelViewSet):
     serializer_class = NoteSerializer
@@ -34,15 +26,21 @@ class NoteViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        base_query = Note.objects.filter(is_deleted=False) 
+        # Sorgu performansını artırmak için owner ve category bilgilerini önceden çekiyoruz.
+        # Etiketler için prefetch_related kullanıyoruz çünkü bu bir Many-to-Many ilişkisidir.
+        base_query = Note.objects.select_related('owner', 'category').prefetch_related('tags').filter(is_deleted=False)
         
         if user.is_staff:
+            # Admin tüm notları görebilir.
             return base_query.order_by("-id")
 
+        # Normal kullanıcılar kendi notlarını veya herkese açık notları görebilir.
+        # Q nesneleri ile yapılan filtreleme doğru, distinct() burada gereksiz
+        # çünkü bir notun sahibi hem kendisi olup hem de public olamaz (tek bir satır döner).
         return base_query.filter(
             Q(owner=user) | 
             Q(is_private=False)
-        ).distinct().order_by("-id")
+        ).order_by("-id")
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
@@ -172,7 +170,7 @@ class AITagGeneratorView(APIView):
         """
 
         try:
-            model = genai.GenerativeModel("gemini-1.0-pro")
+            model = genai.GenerativeModel("gemini-pro")
             
             gemini_response = model.generate_content(prompt)
             
