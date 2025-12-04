@@ -152,4 +152,7 @@ CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SAMESITE = 'None'
-GOOGLE_API_KEY = "AIzaSyARSrf5wLwU1x23ZzZb7X714nAtCgXgeS4"
+
+# GÜVENLİK DÜZELTMESİ: API Anahtarını asla koda yazmayın.
+# Bunun yerine Render.com'daki Ortam Değişkenlerinden (Environment Variables) okuyun.
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")

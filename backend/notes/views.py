@@ -30,8 +30,6 @@ class NoteViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        # Admin ise hepsini görsün (isteğe bağlı) veya sadece silinmemişleri görsün
-        # Normal listede is_deleted=False olanları getirmeliyiz ki çöptekiler ana sayfada çıkmasın.
         base_query = Note.objects.filter(is_deleted=False) 
         
         if user.is_staff:
@@ -65,7 +63,7 @@ class NoteViewSet(viewsets.ModelViewSet):
         user = request.user
         related_notes = Note.objects.filter(
             tags__in=tag_ids,
-            is_deleted=False  # Çöptekiler ilişkili notlarda çıkmasın
+            is_deleted=False  
         ).exclude(
             pk=note.pk
         ).filter(
@@ -84,7 +82,6 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
 
     def get_queryset(self):
-        # Sadece kullanıcıya ait kategorileri getir
         return Category.objects.filter(owner=self.request.user).order_by("-id")
 
     def perform_create(self, serializer):
@@ -97,13 +94,10 @@ class TrashedNoteViewSet(viewsets.ModelViewSet):
     """
     serializer_class = NoteSerializer
     permission_classes = [permissions.IsAuthenticated]
-    # Sadece listeleme, geri getirme ve kalıcı silme işlemlerine izin verelim.
-    # Yeni not oluşturma (create) veya güncelleme (update) gibi işlemlere gerek yok.
     http_method_names = ['get', 'post', 'delete', 'head', 'options']
 
     
     def get_queryset(self):
-        # Sadece giriş yapan kullanıcının, is_deleted=True olan notlarını getir
         return Note.objects.filter(owner=self.request.user, is_deleted=True).order_by("-id")
 
     @action(detail=True, methods=['post'], url_path='restore')
@@ -114,8 +108,6 @@ class TrashedNoteViewSet(viewsets.ModelViewSet):
         note = self.get_object()
         note.is_deleted = False
         note.save()
-        # Başarılı olduğunda boş yanıt yerine, geri yüklenen notun
-        # güncel verisini veya basit bir başarı mesajı döndür.
         return Response({'status': 'note restored'}, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
@@ -123,7 +115,7 @@ class TrashedNoteViewSet(viewsets.ModelViewSet):
         Çöp kutusundaki bir notu kalıcı olarak siler (hard delete).
         """
         note = self.get_object()
-        note.delete() # Bu, veritabanından kalıcı olarak siler.
+        note.delete() 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -139,7 +131,6 @@ class TagCloudView(APIView):
         if user.is_staff:
             visible_notes = Note.objects.filter(is_deleted=False)
         else:
-            # Silinmemiş notlardaki etiketleri gösterelim
             visible_notes = Note.objects.filter(
                 Q(owner=user) | Q(is_private=False),
                 is_deleted=False 
@@ -186,12 +177,9 @@ class AITagGeneratorView(APIView):
         title = request.data.get("title", "")
         content = request.data.get("content", "")
         
-        # Mantık Düzeltmesi: Başlık VE İçerik ikisi de yoksa hata ver.
-        # Biri bile varsa çalışsın.
         if not title and not content:
             return Response({"error": "Başlık veya içerik gerekli"}, status=400)
 
-        # Yazım hataları düzeltildi
         prompt = f"""
         Aşağıdaki metni analiz et ve Türkçe olarak en uygun 3 ila 5 etiketi bul.
         Sadece etiketleri virgül ile ayırarak yaz. Başka hiçbir açıklama yapma.
@@ -201,14 +189,10 @@ class AITagGeneratorView(APIView):
         """
 
         try:
-            # DÜZELTME: API çağrısı yapmadan önce Google AI kütüphanesini API anahtarı ile yapılandır.
             genai.configure(api_key=settings.GOOGLE_API_KEY)
 
-            # DÜZELTME: Güvenlik ayarları, boş içerik gönderildiğinde oluşabilecek
-            # "prompt should not be empty" hatasını önlemek için yapılandırıldı.
-            # Bu, modelin daha esnek çalışmasını sağlar.
             model = genai.GenerativeModel(
-                "gemini-pro",
+                "gemini-1.5-flash",
                 safety_settings={
                     'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
                     'HARM_CATEGORY_HATE_SPEECH': 'BLOCK_NONE',
@@ -217,28 +201,19 @@ class AITagGeneratorView(APIView):
                 }
             )
             
-            # DÜZELTME: Değişken adı 'response' DRF'in Response sınıfı ile çakıştığı için 'gemini_response' olarak değiştirildi.
             gemini_response = model.generate_content(prompt)
             
-            # DÜZELTME: Modelin cevabının engellenip engellenmediğini kontrol et.
-            # Eğer .text'e erişmeye çalışırken hata alırsak, bu genellikle cevabın
-            # güvenlik nedeniyle engellendiği anlamına gelir.
             try:
                 tags_text = gemini_response.text.strip()
             except ValueError:
-                # Cevap engellendiğinde veya boş olduğunda bu hata fırlatılır.
                 print(f"AI Hatası: Modelden geçerli bir metin yanıtı alınamadı. Yanıt: {gemini_response.prompt_feedback}")
                 return Response({"error": "Yapay zeka, sağlanan içerik için etiket üretemedi. Lütfen metni değiştirip tekrar deneyin."}, status=status.HTTP_400_BAD_REQUEST)
             
-            # Virgülle ayır ve temizle
             tags = [tag.strip() for tag in tags_text.split(",") if tag.strip()]
             
             return Response({"tags": tags}, status=200)
             
         except Exception as e:
-            # Hata durumunda konsola daha detaylı yazdıralım.
             error_message = f"Gemini API hatası: {str(e)}"
             print(error_message)
-            # Frontend'e de daha açıklayıcı bir hata gönderelim.
-            # Bu, API anahtarı veya faturalandırma sorunlarını teşhis etmeye yardımcı olur.
             return Response({"error": "Yapay zeka servisine bağlanırken bir sorun oluştu. Lütfen API anahtarınızı ve ayarlarınızı kontrol edin."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
