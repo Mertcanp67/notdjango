@@ -79,7 +79,7 @@ const NoteModal = ({ isOpen, isClosing, onClose, onSave, initialData, loading, t
           <input
             className="note-editor-title"
             name="title"
-            placeholder="Başlıksız"
+            placeholder="Başlık"
             value={noteData.title}
             onChange={handleChange}
             autoFocus
