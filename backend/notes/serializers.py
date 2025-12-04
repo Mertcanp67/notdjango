@@ -55,5 +55,14 @@ class NoteSerializer(TaggitSerializer, serializers.ModelSerializer):
         Kullanıcının sadece kendi kategorisini seçebilmesini sağlar.
         """
         if value and value.owner != self.context['request'].user:
-            raise serializers.ValidationError("Bu kategoriye not ekleme yetkiniz yok.")
+            raise serializers.ValidationError("🚫")
         return value
+
+    def validate_tags(self, value):
+        """
+        Etiketlerdeki olası '##' gibi istenmeyen karakterleri temizler.
+        """
+        # Gelen her etiketi temizleyip, sadece harf ve rakamlardan oluşanları alalım.
+        # Bu, '##' gibi sorunları ve boş etiketleri engeller.
+        clean_tags = [tag.strip().lstrip('#') for tag in value if tag.strip()]
+        return clean_tags

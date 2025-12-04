@@ -68,7 +68,7 @@ const EditableNoteComponent = React.forwardRef(({ note, onStartEdit, onDelete, c
               </>
             ) : (
               <button className="btn ghost" disabled>
-                ⛔ Yetkiniz yok
+                ⛔ Erişim Yok
               </button>
             )}
           </div>

@@ -105,7 +105,6 @@ REST_FRAMEWORK = {
     ],
 }
 
-# dj-rest-auth with allauth registration
 REST_AUTH = {
     "REGISTER_SERIALIZER": "dj_rest_auth.registration.serializers.RegisterSerializer",
 }
@@ -154,18 +153,13 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SAMESITE = 'None'
 
-# GÜVENLİK DÜZELTMESİ: API Anahtarını asla koda yazmayın.
-# Bunun yerine Render.com'daki Ortam Değişkenlerinden (Environment Variables) okuyun.
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 
-# Google AI kütüphanesini uygulama başlangıcında bir kez yapılandır.
 if GOOGLE_API_KEY:
     try:
         genai.configure(api_key=GOOGLE_API_KEY)
         print("Google Generative AI başarıyla yapılandırıldı.")
     except Exception as e:
-        # Yapılandırma başarısız olursa, sunucu loglarına kritik bir hata yazdır.
         print(f"KRİTİK HATA: Google Generative AI yapılandırılamadı: {e}")
 else:
-    # API anahtarı hiç ayarlanmamışsa uyar.
     print("UYARI: GOOGLE_API_KEY ortam değişkeni ayarlanmamış. AI özellikleri çalışmayacak.")
