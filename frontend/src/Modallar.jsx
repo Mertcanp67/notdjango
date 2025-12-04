@@ -68,60 +68,57 @@ const NoteModal = ({ isOpen, isClosing, onClose, onSave, initialData, loading, t
 
   return (
     <div className={`modal-overlay ${isClosing ? 'closing' : ''}`}>
-      <div className={`modal-content ${isClosing ? 'closing' : ''}`}>
-        <div className="modal-body">
-          <h2 className="modal-title">{title}</h2>
+      <div className={`modal-content modal-note-editor zen-mode ${isClosing ? 'closing' : ''}`}>
+        <div className="modal-header">
+          <h3 className="modal-title">{title}</h3>
+          <button onClick={onClose} className="modal-close-button" aria-label="Kapat">
+            &times;
+          </button>
+        </div>
+        <div className="modal-body zen-body">
           <input
-            className="input"
+            className="note-editor-title"
             name="title"
-            placeholder="Başlık"
+            placeholder="Başlıksız"
             value={noteData.title}
             onChange={handleChange}
+            autoFocus
           />
           <textarea
-            className="textarea"
+            className="note-editor-content"
             name="content"
-            placeholder="İçerik (opsiyonel)"
-            rows={6}
+            placeholder="Notunuzu buraya yazın..."
+            rows={8}
             value={noteData.content || ""}
             onChange={handleChange}
           />
-
-          <AITagButton onClick={handleAITagging} isLoading={aiLoading} />
-
-          <TagInput tags={noteData.tags || []} setTags={handleTagsChange} />
-
-          <div className="private-note-container" style={{ border: noteData.is_private ? '1px solid #1abc9c' : '1px solid transparent' }}>
-            <input
-              type="checkbox"
-              id={`isPrivate-${noteData.id || 'new'}`}
-              name="is_private"
-              checked={noteData.is_private}
-              onChange={handleChange}
-              className="private-note-checkbox"
-            />
-            <label htmlFor={`isPrivate-${noteData.id || 'new'}`} className="private-note-label" style={{ color: noteData.is_private ? '#1abc9c' : '#ccc' }}>
-              🔒 Bu notu sadece ben göreyim (Gizli Yap)
-            </label>
+        </div>
+        <div className="modal-footer">
+          <div className="note-editor-tools">
+            <div className="tag-section">
+              <TagInput tags={noteData.tags || []} setTags={handleTagsChange} />
+              <AITagButton onClick={handleAITagging} isLoading={aiLoading} />
+            </div>
+            <div className="privacy-toggle-container">
+              <label htmlFor={`isPrivate-${noteData.id || 'new'}`} className="privacy-toggle-label">
+                {noteData.is_private ? '🔒 Gizli' : '🌐 Herkese Açık'}
+              </label>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  id={`isPrivate-${noteData.id || 'new'}`}
+                  name="is_private"
+                  checked={noteData.is_private}
+                  onChange={handleChange}
+                />
+                <span className="slider round"></span>
+              </label>
+            </div>
           </div>
-
           <div className="modal-actions">
-            <button
-              className="btn primary"
-              onClick={handleSave}
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <div className="spinner"></div>
-                  {noteData.id ? 'Kaydediliyor...' : 'Ekleniyor...'}
-                </>
-              ) : (
-                noteData.id ? 'Değişiklikleri Kaydet' : 'Ekle'
-              )}
-            </button>
-            <button className="btn secondary" onClick={onClose}>
-              Vazgeç
+            <button className="btn secondary" onClick={onClose}>Vazgeç</button>
+            <button className="btn primary" onClick={handleSave} disabled={loading || !noteData.title.trim()}>
+              {loading ? <><div className="spinner"></div>Kaydediliyor...</> : '💾 Kaydet'}
             </button>
           </div>
         </div>
@@ -135,7 +132,7 @@ export const AddNoteModal = ({ isOpen, onClose, onAdd, loading, isClosing, form,
     isOpen={isOpen}
     isClosing={isClosing}
     onClose={onClose}
-    onSave={onAdd}
+    onSave={(noteData) => onAdd(noteData)}
     initialData={form}
     loading={loading}
     title="Yeni Not Oluştur"
@@ -150,8 +147,8 @@ export const EditNoteModal = ({ isOpen, onClose, onSave, loading, isClosing, not
       isClosing={isClosing}
       onClose={onClose}
       onSave={(updatedNote) => {
-        setNote(updatedNote); // Önce lokal state'i güncelle
-        onSave(); // Sonra kaydetme işlemini tetikle
+        if (setNote) setNote(updatedNote); // Önce lokal state'i güncelle
+        onSave(updatedNote); // Sonra kaydetme işlemini tetikle, güncellenmiş notu geçir
       }}
       initialData={note}
       loading={loading}

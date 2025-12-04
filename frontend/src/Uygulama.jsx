@@ -198,15 +198,15 @@ export default function Uygulama() {
     setIsAdmin(false);
   };
 
-const onAdd = useCallback(async () => {
-    if (!form.title.trim()) return;
+const onAdd = useCallback(async (noteData) => {
+    if (!noteData.title.trim()) return;
     try {
       setLoading(true);
       setError("");
       await sleep(1000);
       const payload = {
-        ...form,
-        tags: form.tags, // Artık etiketler zaten string dizisi
+        ...noteData,
+        tags: noteData.tags, // Artık etiketler zaten string dizisi
       };
       const created = await createNote(payload);
       const normalized = { ...created, owner: created.owner ?? currentUser };
@@ -217,11 +217,12 @@ const onAdd = useCallback(async () => {
       showSuccess("Not başarıyla eklendi!");
 
     } catch (e) {
+      console.error("Not eklenirken hata:", e); // Hata ayıklama için eklendi
       setError(e.message);
     } finally {
       setLoading(false);
     }
-  }, [form, currentUser, reloadTags]);
+  }, [currentUser, reloadTags]);
 
   const handleCloseAddModal = useCallback((resetForm = false) => {
     setIsClosingAddModal(true);
