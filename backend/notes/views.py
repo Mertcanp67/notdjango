@@ -170,19 +170,22 @@ class AITagGeneratorView(APIView):
         """
 
         try:
-            model = genai.GenerativeModel("gemini-pro")
+            # Google'ın en güncel ve kararlı modellerinden birini kullanıyoruz.
+            # 'gemini-pro' model adı bazen versiyon uyumsuzluklarına neden olabiliyor.
+            model = genai.GenerativeModel("gemini-1.5-flash-latest")
             
             gemini_response = model.generate_content(prompt)
             
             if not gemini_response or not gemini_response.text:
                  return Response({"error": "Yapay zeka yanıt veremedi."}, status=500)
 
-            tags_text = gemini_response.text.strip()
-            
-            tags = [tag.strip() for tag in tags_text.split(",") if tag.strip()]
+            # Modelin ürettiği etiketleri temizleyip listeye çeviriyoruz.
+            tags_text = gemini_response.text.strip()            
+            tags = [tag.strip().lower() for tag in tags_text.split(",") if tag.strip()]
             
             return Response({"tags": tags}, status=200)
             
         except Exception as e:
             print(f"GEMINI API HATASI: {str(e)}")
-            return Response({"error": f"Yapay zeka servisine bağlanırken hata oluştu: {str(e)}"}, status=500)
+            # Hata mesajını doğrudan ön yüze göndermek yerine daha genel bir mesaj veriyoruz.
+            return Response({"error": "Yapay zeka servisiyle iletişim kurulamadı. Lütfen daha sonra tekrar deneyin."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
