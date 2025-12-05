@@ -198,6 +198,14 @@ export default function Uygulama() {
     setIsAdmin(false);
   };
 
+  const handleAuthSubmit = (mode, form) => {
+    if (mode === 'login') {
+      handleLogin(form.username, form.password);
+    } else if (mode === 'register') {
+      handleRegister(form.username, form.password, form.password2, form.email);
+    }
+  };
+
 const onAdd = useCallback(async (noteData) => {
     if (!noteData.title.trim()) return;
     try {
@@ -327,8 +335,7 @@ const onAdd = useCallback(async (noteData) => {
 
   if (!token) {
     return <Auth 
-      onLogin={handleLogin} 
-      onRegister={handleRegister} 
+      onSubmit={handleAuthSubmit}
       loading={loading} 
       error={error} 
       setError={setError}

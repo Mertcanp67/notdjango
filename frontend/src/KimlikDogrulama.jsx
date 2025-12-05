@@ -86,7 +86,7 @@ const StyledToggleButton = styled(ToggleButton)(({ theme }) => ({
   },
 }));
 
-export function Auth({ onLogin, onRegister, loading, error, setError, successMessage, isSuccessVisible }) {
+export function Auth({ onSubmit, loading, error, setError, successMessage, isSuccessVisible }) {
   const [authMode, setAuthMode] = useState('login');
   const [authForm, setAuthForm] = useState({
     username: '',
@@ -101,14 +101,9 @@ export function Auth({ onLogin, onRegister, loading, error, setError, successMes
     setAuthForm({ ...authForm, [e.target.name]: e.target.value });
   };
 
-  const handleLogin = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    onLogin(authForm.username, authForm.password);
-  };
-
-  const handleRegister = (e) => {
-    e.preventDefault();
-    onRegister(authForm.username, authForm.password, authForm.password2, authForm.email);
+    onSubmit(authMode, authForm);
   };
 
   const handleModeChange = (event, newMode) => {
@@ -128,7 +123,7 @@ export function Auth({ onLogin, onRegister, loading, error, setError, successMes
       exit="exit"
       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
     >
-      <form onSubmit={isLogin ? handleLogin : handleRegister}>
+      <form onSubmit={handleSubmit}>
         <motion.div variants={itemVariants}>
           <StyledTextField
             label="Kullanıcı Adı"
@@ -226,7 +221,7 @@ export function Auth({ onLogin, onRegister, loading, error, setError, successMes
     >
       <motion.div initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <Typography variant="h3" component="h1" gutterBottom sx={{ textAlign: 'center', fontWeight: 'bold', color: 'white', letterSpacing: '1px', textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
-          Not Defteri
+          Özel Not Defteri
         </Typography>
       </motion.div>
 

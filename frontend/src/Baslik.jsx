@@ -4,7 +4,7 @@ export function Header({ currentUser, onLogout, theme, onToggleTheme, isAdmin })
   return (
     <div className="header">
       <div className="logo">🗒️</div>
-      <h1 className="h1">Özel Not Uygulaması</h1>
+      <h1 className="h1">Özel Not Defteri</h1>
       <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
         {isAdmin && (
           <span style={{ color: 'var(--danger)', fontWeight: 'bold', border: '1px solid var(--danger)', padding: '4px 8px', borderRadius: '6px' }}>
