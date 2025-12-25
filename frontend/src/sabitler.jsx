@@ -6,10 +6,10 @@ export const CATEGORY_CHOICES = [
 ];
 
 export const CategoryMap = {
-    GEN: { label: 'GENEL', color: '#8be9fd' },
-    IMP: { label: 'ÖNEMLİ', color: '#ff5555' },
-    TODO: { label: 'YAPILACAK', color: '#f1fa8c' },
-    IDE: { label: 'FİKİR', color: '#50fa7b' }
+    GEN: { label: 'GENEL', color: 'var(--primary)' },
+    IMP: { label: 'ÖNEMLİ', color: '#e5484d' },
+    TODO: { label: 'YAPILACAK', color: '#f9a825' },
+    IDE: { label: 'FİKİR', color: '#8e44ad' }
 };
 
 export const LoadingSpinner = () => (

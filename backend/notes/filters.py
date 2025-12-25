@@ -18,4 +18,4 @@ class NoteFilter(filters.FilterSet):
 
     class Meta:
         model = Note
-        fields = ['tags', 'category', 'is_private']
+        fields = ['tags', 'category', 'is_public']

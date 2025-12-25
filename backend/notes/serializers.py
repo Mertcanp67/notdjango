@@ -39,15 +39,21 @@ class NoteSerializer(TaggitSerializer, serializers.ModelSerializer):
             "title",
             "content",
             "created_at",
+            "updated_at",
             "owner",
-            "is_private",
+            "is_public",
+            "share_uuid",
             "category",
             "category_id",
             "tags",
+            "is_pinned",
+            "order"
         ]
         extra_kwargs = {
             'id': {'read_only': True},
-            'created_at': {'read_only': True}
+            'created_at': {'read_only': True},
+            'updated_at': {'read_only': True},
+            'share_uuid': {'read_only': True}
         }
 
     def validate_category_id(self, value):
@@ -66,3 +72,21 @@ class NoteSerializer(TaggitSerializer, serializers.ModelSerializer):
         # Bu, '##' gibi sorunları ve boş etiketleri engeller.
         clean_tags = [tag.strip().lstrip('#') for tag in value if tag.strip()]
         return clean_tags
+
+class PublicNoteSerializer(serializers.ModelSerializer):
+    tags = TagListSerializerField(read_only=True)
+    category = CategorySerializer(read_only=True)
+    owner = serializers.CharField(source="owner.username", read_only=True)
+
+    class Meta:
+        model = Note
+        fields = [
+            "title",
+            "content",
+            "created_at",
+            "updated_at",
+            "category",
+            "tags",
+            "owner",
+        ]
+        read_only_fields = fields

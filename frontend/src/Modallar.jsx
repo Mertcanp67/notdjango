@@ -1,52 +1,56 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+  IconButton,
+  Box,
+  Stack,
+  FormControlLabel,
+  Switch,
+  CircularProgress,
+  Typography,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
+} from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ShareIcon from '@mui/icons-material/Share';
+import CloseIcon from '@mui/icons-material/Close';
 import { TagInput } from './TagInput';
-import { generateAITags } from './api'; 
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css'; // Quill'in stil dosyasını ekleyin
 
-const AITagButton = ({ onClick, isLoading }) => (
-  <div className="ai-tag-button-container">
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={isLoading}
-      className="ai-tag-button"
-    >
-      {isLoading ? (
-        <>⏳ Analiz Ediliyor...</>
-      ) : (
-        <>✨ Yapay Zeka ile Etiketle</>
-      )}
-    </button>
-  </div>
-);
+// Backend'den gelen ve HTML entity'lerine dönüştürülmüş içeriği
+// tekrar HTML'e çevirmek için bir yardımcı fonksiyon.
+const unescapeHtml = (html) => {
+  if (!html) return '';
+  const txt = document.createElement("textarea");
+  txt.innerHTML = html;
+  return txt.value;
+};
 
-const NoteModal = ({ isOpen, isClosing, onClose, onSave, initialData, loading, title }) => {
+const EMPTY_NOTE = { title: "", content: "", is_private: false, tags: [], category: null };
+
+const NoteModal = ({ isOpen, onClose, onSave, onShare, initialData, loading, title, categories }) => {
   const [noteData, setNoteData] = useState(initialData);
-  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      setNoteData(initialData);
+      // Düzenleme sırasında, initialData.category bir nesnedir. ID'sini almamız gerekir.
+      // Yeni not eklerken, initialData.category null'dır.
+      const categoryId = initialData.category?.id ?? null;
+      setNoteData({ 
+        ...initialData, 
+        content: unescapeHtml(initialData.content || ''),
+        category: categoryId, // State'de sadece kategori ID'sini tut
+      });
     }
   }, [isOpen, initialData]);
-
-  const handleAITagging = async () => {
-    if (!noteData.title && !noteData.content) {
-      alert("Yapay zeka analizi için lütfen önce bir Başlık veya İçerik girin.");
-      return;
-    }
-    setAiLoading(true);
-    try {
-      const res = await generateAITags({ title: noteData.title, content: noteData.content });
-      const currentTags = noteData.tags || [];
-      const newTags = [...new Set([...currentTags, ...res.tags])];
-      setNoteData(prev => ({ ...prev, tags: newTags }));
-    } catch (error) {
-      console.error("AI Hatası:", error);
-      alert("Etiket üretilemedi. Lütfen tekrar deneyin.");
-    } finally {
-      setAiLoading(false);
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -54,6 +58,10 @@ const NoteModal = ({ isOpen, isClosing, onClose, onSave, initialData, loading, t
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const handleContentChange = (content) => {
+    setNoteData(prev => ({ ...prev, content }));
   };
 
   const handleTagsChange = (newTags) => {
@@ -64,95 +72,176 @@ const NoteModal = ({ isOpen, isClosing, onClose, onSave, initialData, loading, t
     onSave(noteData);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className={`modal-overlay ${isClosing ? 'closing' : ''}`}>
-      <div className={`modal-content modal-note-editor zen-mode ${isClosing ? 'closing' : ''}`}>
-        <div className="modal-header">
-          <h3 className="modal-title">{title}</h3>
-          <button onClick={onClose} className="modal-close-button" aria-label="Kapat">
-            &times;
-          </button>
-        </div>
-        <div className="modal-body zen-body">
-          <input
-            className="note-editor-title"
-            name="title"
-            placeholder="Başlık"
-            value={noteData.title}
-            onChange={handleChange}
-            autoFocus
-          />
-          <textarea
-            className="note-editor-content"
-            name="content"
-            placeholder="Notunuzu buraya yazın..."
-            rows={8}
-            value={noteData.content || ""}
-            onChange={handleChange}
-          />
-        </div>
-        <div className="modal-footer">
-          <div className="note-editor-tools">
-            <div className="tag-section">
-              <TagInput tags={noteData.tags || []} setTags={handleTagsChange} />
-              <AITagButton onClick={handleAITagging} isLoading={aiLoading} />
-            </div>
-            <div className="privacy-toggle-container">
-              <label htmlFor={`isPrivate-${noteData.id || 'new'}`} className="privacy-toggle-label">
-                {noteData.is_private ? '🔒 Gizli' : '🌐 Herkese Açık'}
-              </label>
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  id={`isPrivate-${noteData.id || 'new'}`}
-                  name="is_private"
-                  checked={noteData.is_private}
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      fullWidth
+      maxWidth="md"
+      PaperProps={{
+        component: 'form',
+        onSubmit: (e) => { e.preventDefault(); handleSave(); },
+        sx: {
+          borderRadius: '16px',
+          background: 'var(--card)',
+          border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-lg)',
+          color: 'var(--text)',
+          height: '90vh',
+          maxHeight: '800px',
+          display: 'flex',
+          flexDirection: 'column'
+        }
+      }}
+    >
+      <DialogTitle sx={{ borderBottom: '1px solid var(--border)', pb: 1.5 }}>
+        <Typography variant="h6" component="span">{title}</Typography>
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{
+            position: 'absolute',
+            right: 12,
+            top: 12,
+            color: 'var(--muted)',
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2, overflow: 'hidden' }}>
+        <TextField
+          name="title"
+          placeholder="Başlık"
+          value={noteData.title || ''}
+          onChange={handleChange}
+          autoFocus
+          variant="standard"
+          InputProps={{ disableUnderline: true, sx: { fontSize: '1.5rem', fontWeight: '600' } }}
+        />
+        <Box sx={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', '& .ql-container': { flexGrow: 1, overflow: 'auto' } }}>
+            <ReactQuill
+              theme="snow"
+              className="note-editor-content"
+              value={noteData.content || ""}
+              onChange={handleContentChange}
+              placeholder="Notunuzu buraya yazın..."
+              modules={{
+                toolbar: [
+                  [{ 'header': [1, 2, 3, false] }],
+                  ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                  [{'list': 'ordered'}, {'list': 'bullet'}],
+                  ['link', 'image'],
+                  ['clean']
+                ],
+              }}
+            />
+        </Box>
+      </DialogContent>
+      <DialogActions sx={{ p: 2, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 2 }}>
+        <TagInput tags={noteData.tags || []} setTags={handleTagsChange} />
+        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <FormControlLabel
+              control={<Switch checked={noteData.is_private || false} onChange={handleChange} name="is_private" />}
+              label={noteData.is_private ? '🔒 Gizli Not' : '🌐 Herkese Açık'}
+            />
+            <FormControl variant="outlined" size="small" sx={{ minWidth: 150 }}>
+              <InputLabel id="category-select-label">Kategori</InputLabel>
+              <Select
+                  labelId="category-select-label"
+                  name="category"
+                  value={noteData.category || ''}
                   onChange={handleChange}
-                />
-                <span className="slider round"></span>
-              </label>
-            </div>
-          </div>
-          <div className="modal-actions">
-            <button className="btn secondary" onClick={onClose}>Vazgeç</button>
-            <button className="btn primary" onClick={handleSave} disabled={loading || !noteData.title.trim()}>
-              {loading ? <><div className="spinner"></div>Kaydediliyor...</> : '💾 Kaydet'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+                  label="Kategori"
+              >
+                  <MenuItem value=""><em>Kategorisiz</em></MenuItem>
+                  {categories?.map(cat => (
+                      <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+          </Stack>
+          <Stack direction="row" spacing={1} sx={{ ml: 'auto' }}>
+            {initialData.id && (
+              <Button 
+                startIcon={<ShareIcon />} 
+                onClick={() => onShare(noteData)}
+                variant={noteData.is_shared ? "outlined" : "text"}
+              >
+                {noteData.is_shared ? "Paylaşılıyor" : "Paylaş"}
+              </Button>
+            )}
+            <Button onClick={onClose} sx={{ color: 'var(--muted)' }}>Vazgeç</Button>
+            <Button type="submit" variant="contained" disabled={loading || !noteData.title?.trim()}>
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'Kaydet'}
+            </Button>
+          </Stack>
+        </Stack>
+      </DialogActions>
+    </Dialog>
   );
 };
 
-export const AddNoteModal = ({ isOpen, onClose, onAdd, loading, isClosing, form, setForm }) => (
+export const AddNoteModal = ({ isOpen, onClose, onAdd, loading, categories }) => (
   <NoteModal
     isOpen={isOpen}
-    isClosing={isClosing}
     onClose={onClose}
-    onSave={(noteData) => onAdd(noteData)}
-    initialData={form}
+    onSave={onAdd}
+    initialData={EMPTY_NOTE}
     loading={loading}
+    categories={categories}
     title="Yeni Not Oluştur"
   />
 );
 
-export const EditNoteModal = ({ isOpen, onClose, onSave, loading, isClosing, note, setNote }) => {
+export const EditNoteModal = ({ isOpen, onClose, onSave, onShare, loading, note, categories }) => {
   if (!note) return null;
   return (
     <NoteModal
       isOpen={isOpen}
-      isClosing={isClosing}
       onClose={onClose}
-      onSave={(updatedNote) => {
-        if (setNote) setNote(updatedNote); // Önce lokal state'i güncelle
-        onSave(updatedNote); // Sonra kaydetme işlemini tetikle, güncellenmiş notu geçir
-      }}
+      onSave={onSave}
+      onShare={onShare}
+      categories={categories}
       initialData={note}
       loading={loading}
       title="Notu Düzenle"
     />
+  );
+};
+
+export const ShareModal = ({ isOpen, onClose, shareUrl }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+    });
+  };
+
+  return (
+    <Dialog open={isOpen} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>Notu Paylaş</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Bu linke sahip olan herkes notu görüntüleyebilir.
+        </Typography>
+        <TextField
+          fullWidth
+          readOnly
+          value={shareUrl}
+          variant="outlined"
+          size="small"
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleCopy} startIcon={<ContentCopyIcon />}>
+          {copied ? 'Kopyalandı!' : 'Linki Kopyala'}
+        </Button>
+        <Button onClick={onClose}>Kapat</Button>
+      </DialogActions>
+    </Dialog>
   );
 };

@@ -1,5 +1,5 @@
 # backend/notes/models.py
-
+import uuid
 from django.db import models
 from django.contrib.auth.models import User
 from taggit.managers import TaggableManager
@@ -11,9 +11,13 @@ class Note(models.Model):
     title = models.CharField(max_length=200)
     content = models.TextField(blank=True, null=True) 
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     tags = TaggableManager(blank=True)
-    is_private = models.BooleanField(default=False)
+    is_public = models.BooleanField(default=False)
+    share_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     is_deleted = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0, db_index=True)
+    is_pinned = models.BooleanField(default=False)
 
     category = models.ForeignKey(
         'Category', 
@@ -24,10 +28,10 @@ class Note(models.Model):
     )
 
     class Meta:
-        ordering = ["-id"]
+        ordering = ["order", "-created_at"]
 
     def __str__(self):
-        privacy = "Private" if self.is_private else "Public"
+        privacy = "Public" if self.is_public else "Private"
         return f"{self.title} ({self.owner.username}) [{privacy}]"
 
 class Category(models.Model):

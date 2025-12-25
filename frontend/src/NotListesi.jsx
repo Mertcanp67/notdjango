@@ -1,41 +1,38 @@
 import React from 'react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { EditableNote } from './DuzenlenebilirNot';
+import NotKarti from './NotKarti.jsx';
+import { Grid } from '@mui/material';
 
-export function NoteList({ notes, setNotes, filteredNotes, activeFilter, onSave, onStartEdit, onTrash, onTagClick, currentUser, isAdmin }) {
-
-  const handleDragEnd = (result) => {
-    const { destination, source } = result;
-    if (!destination || (destination.droppableId === source.droppableId && destination.index === source.index)) {
-      return;
-    }
-    const items = Array.from(notes);
-    const [reorderedItem] = items.splice(source.index, 1);
-    items.splice(destination.index, 0, reorderedItem);
-    setNotes(items);
-  };
+const NotListesi = ({ notes, onNoteSelect, onNoteDelete, onTagClick, onTogglePin, onDragStart, onDragOver, onDrop }) => {
+  if (!notes || notes.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-muted)' }}>
+        <h3>Henüz not yok.</h3>
+        <p>Yeni bir not ekleyerek başlayın!</p>
+      </div>
+    );
+  }
 
   return (
-    <ul className="grid" style={{ marginTop: 0, listStyle: "none", padding: 0 }}>
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="notes">
-          {(provided) => (
-            <div {...provided.droppableProps} ref={provided.innerRef}>
-              {notes.map((n, index) => {
-                const isVisible = filteredNotes.some(fn => fn.id === n.id);
-                const noteClass = activeFilter ? (isVisible ? 'filtered-in' : 'filtered-out') : '';
-                return (
-                  <Draggable key={n.id} draggableId={n.id.toString()} index={index}>
-                    {(provided, snapshot) => ( <EditableNote ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} note={n} onSave={onSave} onStartEdit={onStartEdit} onTrash={onTrash} onTagClick={onTagClick} currentUser={currentUser} isAdmin={isAdmin} animationDelay={index * 50} extraClassName={`${noteClass} ${snapshot.isDragging ? 'dragging' : ''}`} />
-)}
-                  </Draggable>
-                );
-              })}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
-    </ul>
+    // 1. Grid sistemini kuruyoruz.
+    // 'container' prop'u bu Grid'in bir sarmalayıcı olduğunu belirtir.
+    // 'spacing={3}' ise item'lar arasına boşluk ekler (3 * 8px = 24px).
+    <Grid container spacing={3} style={{ padding: '24px' }}>
+      {notes.map(note => (
+        <Grid key={note.id} xs={12} sm={6} lg={4}>
+          <NotKarti
+            note={note}
+            onSelect={onNoteSelect}
+            onDelete={onNoteDelete}
+            onTagClick={onTagClick}
+            onTogglePin={onTogglePin}
+            onDragStart={onDragStart}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+          />
+        </Grid>
+      ))}
+    </Grid>
   );
-}
+};
+
+export default NotListesi;

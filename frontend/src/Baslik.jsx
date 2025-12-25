@@ -1,24 +1,34 @@
 import React from 'react';
+import { Button, Box, Typography, IconButton, TextField } from '@mui/material';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import AddIcon from '@mui/icons-material/Add';
 
-export function Header({ currentUser, onLogout, theme, onToggleTheme, isAdmin }) {
+export function Header({ 
+  currentUser, 
+  theme, 
+  onToggleTheme, 
+  search, 
+  setSearch, 
+  onAddNoteClick 
+}) {
   return (
-    <div className="header">
-      <div className="logo">🗒️</div>
-      <h1 className="h1">Özel Not Defteri</h1>
-      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
-        {isAdmin && (
-          <span style={{ color: 'var(--danger)', fontWeight: 'bold', border: '1px solid var(--danger)', padding: '4px 8px', borderRadius: '6px' }}>
-            🛡️ Admin Paneli
-          </span>
-        )}
-        <span style={{ color: "#8fa3bf" }}>👤 {currentUser}</span>
-        <button className="btn ghost" onClick={onToggleTheme} style={{ padding: '8px 12px' }}>
-          {theme === 'light' ? '🌙' : '☀️'}
-        </button>
-        <button className="btn ghost" onClick={onLogout}>
-          Çıkış
-        </button>
-      </div>
-    </div>
+    <Box className="content-header">
+      <Typography variant="h6">Hoş geldin, {currentUser}!</Typography>
+      
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2, marginLeft: 'auto' }}>
+        <TextField
+          placeholder="Notlarda ara..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          variant="outlined"
+          size="small"
+        />
+        <Button variant="contained" onClick={onAddNoteClick} startIcon={<AddIcon />}>Yeni Not Ekle</Button>
+        <IconButton onClick={onToggleTheme} color="inherit">
+          {theme === 'light' ? <Brightness4Icon /> : <Brightness7Icon />}
+        </IconButton>
+      </Box>
+    </Box>
   );
 }

@@ -1,114 +1,58 @@
-[data-theme="dark"] {
-  --bg: #0b1020;
-  --card: #121a2b;
-  --input-bg: #0f172a;
-  --muted: #8fa3bf;
-  --text: #e6eefc;
-  --primary: #6ea8fe;
-  --primary-strong:#3d82ff;
-  --danger:#ff6b6b;
-  --danger-bg: #3a1620;
-  --danger-border: #5f2230;
-  --danger-text: #ffd8d8;
-  --ring:#2a3a5c;
-  --primary-glow: 0 0 20px 0px rgba(110, 168, 254, 0.35);
-  --border: #1f2a44;
-  --shadow: 0 10px 30px rgba(0,0,0,.35);
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.15);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.15);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.25), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
-}
-
-[data-theme='light'] {
-  --bg: #f0f2f5;
-  --card: #ffffff;
-  --input-bg: #e9eef6;
-  --muted: #65676b;
-  --text: #1c1e21;
-  --primary: #1d6dff;
-  --primary-strong:#0052d9;
-  --danger:#d92626;
-  --danger-bg: #ffebee;
-  --danger-border: #ffcdd2;
-  --danger-text: #c62828;
-  --ring:#a8c5ff;
-  --primary-glow: 0 0 20px 0px rgba(29, 109, 255, 0.25);
-  --border: #dce0e5;
-  --shadow: 0 10px 30px rgba(0,0,0,.1);
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-}
-
-:root {
-  --radius:16px;
-}
     *{box-sizing:border-box}
     html,body,#root{height:100%}
     body{
         margin:0;
         font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Inter, Arial, "Apple Color Emoji","Segoe UI Emoji";
         color:var(--text);
-        background:
-            radial-gradient(1200px 600px at 10% -10%, #1b2650 0%, transparent 60%),
-            radial-gradient(1200px 600px at 110% 10%, #1a2d52 0%, transparent 60%),
-            var(--bg);
-
+        background-color: var(--bg);
+        /* Arka plana yumuşak bir geçiş ve animasyon ekliyoruz */
+        transition: background-color 0.3s ease, color 0.3s ease;
         min-height: 100vh;
         background-attachment: fixed;
     }
 
-    .container{
-      max-width: 920px;
-      margin: 56px auto;
-      padding: 0 20px;
-    }
-
-    .header{
-      display:flex; align-items:center; gap:14px; margin-bottom:18px;
-    }
     .logo{
       width:40px; height:40px; display:grid; place-items:center;
-      border-radius:12px; background:linear-gradient(135deg,#3d82ff, #6ea8fe);
-      color:white; font-size:22px; box-shadow:var(--shadow-lg);
-    }
-    .h1{
-      font-size: clamp(28px, 4vw, 40px);
-      margin:0; letter-spacing:.4px;
+      border-radius:12px; background:linear-gradient(135deg, var(--primary), var(--primary-light));
+      color:var(--primary-contrast); font-size:22px; box-shadow:var(--shadow-lg);
     }
 
     .toolbar{
-      display:flex; gap:10px; margin: 22px 0 26px;
+      display:flex; gap:12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 24px;
     }
     .input, .textarea{
-      width:100%; border:1px solid transparent; outline:none;
+      width:100%; border:1px solid var(--border); outline:none;
       background: var(--input-bg);
       color: var(--text);
       padding: 12px 14px;
-      border-radius: 10px;
+      border-radius: 12px;
       transition: border-color .2s ease, box-shadow .2s ease;
     }
-    .input::placeholder, .textarea::placeholder{ color: #98a6c7 }
+    .input::placeholder, .textarea::placeholder{ color: var(--muted) }
     .input:focus, .textarea:focus{
-      border-color: var(--ring);
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+      border-color: var(--ring); 
+      box-shadow: var(--focus-ring-shadow);
     }
 
     .btn{
       border:1px solid transparent;
-      background:#1b2a4a; color:var(--text);
+      background:var(--input-bg); color:var(--text);
       padding: 10px 14px; border-radius:12px; cursor:pointer;
       font-weight: 600;
       transition: all .2s ease;
     }
     .btn:hover{ 
-      background:#203056;
+      background:var(--input-bg-hover);
       transform: translateY(-2px);
       box-shadow: var(--shadow-md);
     }
     .btn:active{ 
       transform: translateY(0px);
-      box-shadow: var(--shadow-sm);
+      box-shadow: none;
     }
 
     .btn.primary{
@@ -121,48 +65,95 @@
     .btn.secondary{ background:var(--input-bg) }
     .btn.ghost{ background:transparent; border:1px solid var(--ring) }
     .btn.danger{ background: var(--danger-bg); border:1px solid var(--danger-border); color:var(--danger-text) }
-    .btn.danger:hover{ background:#4a1a27 }
+    .btn.danger:hover{ background:var(--danger-bg-hover) }
 
     .grid{
       display:grid; 
-      gap:14px;
-      grid-template-columns: 1fr; 
+      gap: 24px; /* Boşluklar artırıldı */
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     }
 
     .card{
         background: var(--card);
         border:1px solid var(--border);
-        border-radius: 12px;
-        box-shadow: var(--shadow-md);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm); /* Daha hafif bir başlangıç gölgesi */
         padding: 16px;
     }
 
     .note-card{
-      background: linear-gradient(180deg, rgba(255,255,255,.02), transparent), var(--card);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background: var(--card);
       border:1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 16px;
-      transition: all .25s cubic-bezier(.4,0,.2,1);
+      border-radius: var(--radius);
+      padding: 20px; /* Kart içi boşluk artırıldı */
+      /* Geçişler daha hızlı ve pürüzsüz hale getirildi */
+      transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
       box-shadow: var(--shadow-md);
-      border-left: 5px solid transparent;
+      opacity: 0;
+      transform: translateY(20px);
+      /* Animasyonun daha dinamik hissettirmesi için easing eklendi */
+      animation: slideInUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+      /* Tarayıcıya hangi özelliklerin değişeceğini bildirerek performansı artırır */
+      will-change: transform, box-shadow, border-color;
     }
     .note-card:not(.deleting):hover {
-        transform: translateY(-5px);
-        border-color: var(--ring);
-        box-shadow: var(--shadow-lg);
-        cursor: pointer;
+        transform: translateY(-5px); /* Kaldırma efekti biraz daha belirginleştirildi */
+        box-shadow: var(--shadow-xl); /* Gölge daha da belirginleşiyor */
+        border-color: var(--ring); /* Vurgu rengi daha yumuşak */
+    }
+
+    .note-card.pinned {
+      border-left: 3px solid var(--primary);
+    }
+
+    .note-card .pin-button {
+      color: var(--muted);
+    }
+    .note-card:hover .pin-button {
+      color: var(--primary);
     }
 
     .note-card.dragging {
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
-        transform: translateY(-5px) scale(1.02);
-    }
-    .note-card.dragging {
         opacity: 0.5;
+        box-shadow: var(--shadow-xl);
         transform: scale(0.98);
     }
+
+    .note-content-wrapper {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0; /* Prevents flex item from overflowing its container */
+    }
+
+    .note-content-preview {
+      margin-top: 10px;
+      overflow: hidden;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .note-content-preview .ql-editor {
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2; /* İçerik önizlemesi 2 satıra düşürüldü */
+      -webkit-box-orient: vertical;
+      padding: 0; /* Override Quill's default padding */
+    }
+
+    .note-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: auto; /* Bu, footer'ı kartın en altına iter */
+      padding-top: 12px;
+    }
+
     .note-title{
-      font-weight:700; font-size:18px; margin:0;
+      font-weight:600; font-size: 18px; margin:0; /* Başlık daha belirgin */
     }
     .note-date{
       color:var(--muted); font-size:12.5px;
@@ -173,7 +164,8 @@
       align-items:center;
       opacity: 0;
       transform: translateY(4px);
-      transition: opacity 0.2s ease, transform 0.2s ease;
+      /* Kart hover olduktan hemen sonra görünmesi için küçük bir gecikme eklendi */
+      transition: opacity 0.2s ease 0.05s, transform 0.2s ease 0.05s;
     }
     .note-card:hover .note-actions {
       opacity: 1;
@@ -181,6 +173,10 @@
     }
     .note-head{
       display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
+    }
+
+    .note-head .note-meta {
+      font-size: 0.8em; color: var(--muted); display: flex; flex-direction: column; gap: 4px;
     }
 
     .footer-muted{
@@ -214,15 +210,14 @@
       gap: 14px;
     }
     .alert-success {
-        background-color: #1abc9c; 
-        color: #fff;
+        background-color: var(--success-bg); 
+        color: var(--success-text);
         padding: 10 px 20px;
-        border-radius: 8px;
         border-radius: 10px;
         margin-bottom: 20px;
         font-weight: bold;
         text-align: center;
-        box-shadow: var(--shadow);
+        box-shadow: var(--shadow-md);
         opacity: 0;
         transform: translateY(-100%);
         transition: opacity 0.4s ease, transform 0.4s ease;
@@ -235,7 +230,7 @@
     .loading-bar-container {
         width: 100%;
         height: 4px;
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: color-mix(in srgb, var(--text) 10%, transparent);
         border-radius: 2px;
         margin-bottom: 20px;
         overflow: hidden;
@@ -244,7 +239,7 @@
     .loading-bar {
         width: 30%;
         height: 100%;
-        background-color: #3498db; 
+        background-color: var(--primary); 
         border-radius: 2px;
         animation: slide-and-grow 1.5s infinite linear;
     }
@@ -265,12 +260,6 @@
     }
 
 
-.note-card {
-    opacity: 0;
-    transform: translateY(20px);
-    animation: slideInUp 0.5s forwards; 
-}
-
 .note-card.filtered-out, .stat-item.filtered-out {
     animation: fadeOutAndShrink 0.4s forwards ease-out !important;
 }
@@ -289,7 +278,7 @@
 }
 
 .stat-item:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: color-mix(in srgb, var(--text) 5%, transparent);
     transform: translateX(5px);
 }
 
@@ -325,37 +314,101 @@
     background-color: var(--card);
     padding: 20px;
     margin-bottom: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
 }
 
 .stat-dashboard div {
     padding: 0 10px;
 }
 
-.main-layout {
+.app-layout {
     display: grid;
-    grid-template-columns: 300px 1fr; 
-    gap: 20px;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+    padding: 24px;
+    max-width: 1800px;
+    margin: 0 auto;
 }
 
-.main-layout-left {
-    position: sticky;
-    top: 20px;
-    align-self: start; 
-}
-
-.main-layout-right {
+.main-content {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    min-height: calc(100vh - 48px);
 }
+
+.notes-area {
+  flex-grow: 1;
+}
+
+.content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background-color: transparent; /* Arka plan rengi kaldırıldı */
+  border: none;
+  border-bottom: 1px solid var(--border); /* Sadece alt çizgi */
+  border-radius: 0; /* Köşeler düz */
+  margin-bottom: 24px;
+}
+
+.sidebar {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 48px); /* height yerine max-height taşmayı önler */
+  position: sticky;
+  top: 24px;
+  /* Diğer içeriklerin altında kalmasını önlemek için z-index tanımlandı */
+  z-index: var(--z-sticky);
+  box-shadow: var(--shadow-lg);
+}
+
+.sidebar-header {
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-content {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-section {
+  margin-bottom: 24px;
+}
+.sidebar-section:last-child {
+  margin-bottom: 0;
+}
+
+.sidebar-section-title {
+  margin: 0 0 15px;
+  color: var(--primary);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+  font-size: 1.1em;
+}
+
 
 .spinner {
   width: 18px;
   height: 18px;
-  border: 3px solid rgba(255, 255, 255, 0.3); /* Halka rengi */
-  border-top-color: #fff; /* Dönen kısmın rengi */
+  border: 3px solid color-mix(in srgb, var(--primary-contrast, #fff) 30%, transparent); /* Halka rengi */
+  border-top-color: var(--primary-contrast, #fff); /* Dönen kısmın rengi */
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -363,8 +416,7 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
-  }
-}
+  }}
 
 .note-card.deleting {
   animation: fadeOutAndShrink 0.4s forwards ease-out;
@@ -390,12 +442,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(11, 16, 32, 0.8);
+  background: var(--overlay-bg);
   backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-modal);
   animation: fadeIn 0.3s ease;
 }
 
@@ -431,227 +483,60 @@
   to { opacity: 0; transform: scale(0.95); }
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(11, 16, 32, 0.8);
-  backdrop-filter: blur(5px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease;
-}
-
-.modal-content {
-  background: var(--card);
-  border-radius: 14px;
-  box-shadow: var(--shadow-lg);
-  width: 100%;
-  max-width: 800px; /* Daha da geniş ve ferah bir tuval */
-  border: 1px solid var(--border);
-  animation: scaleUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.modal-overlay.closing .modal-content {
-}
 .delete-confirm-overlay.closing {
   animation: fadeOutAndScaleDown 0.3s forwards ease-out;
 }
 
-.markdown-content {
-  white-space: pre-wrap;
-  margin: 0;
-  font-size: 1em;
-  line-height: 1.6;
-}
-.markdown-content h1, .markdown-content h2, .markdown-content h3 {
-  margin-top: 1em;
-  margin-bottom: 0.5em;
-  border-bottom: 1px solid var(--ring);
-  padding-bottom: 0.3em;
-}
-.markdown-content code {
-  background-color: var(--input-bg);
-  padding: 0.2em 0.4em;
-  border-radius: 3px;
-  font-family: 'Courier New', Courier, monospace;
-}
-.markdown-content pre > code {
-  display: block;
-  padding: 1em;
+/* Yeni Not Ekleme/Düzenleme Modalı için ReactQuill Stilleri */
+.note-editor-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Fill available space */
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-.etiket-bulutu {
+.note-editor-content .ql-toolbar {
+  background: var(--input-bg);
+  border: none !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.note-editor-content .ql-toolbar .ql-stroke {
+  stroke: var(--muted);
+}
+.note-editor-content .ql-toolbar .ql-fill {
+  fill: var(--muted);
+}
+.note-editor-content .ql-toolbar .ql-picker-label {
+  color: var(--muted);
+}
+
+.note-editor-content .ql-container {
+  font-size: 1rem;
+  font-family: inherit;
+  border: none !important;
   background: var(--card);
-  padding: 15px;
-  border-radius: 12px;
-  box-shadow: var(--shadow-md);
-  position: sticky;
-  top: 20px;
-  align-self: start;
-}
-
-.etiket-bulutu h4 {
-  margin-top: 0;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 10px;
-  margin-bottom: 10px;
-}
-
-.etiket-listesi {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.note-tags {
-  margin-top: 12px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.etiket {
-  background: var(--ring);
-  color: var(--muted);
-  border: 1px solid transparent;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  cursor: default;
-  transition: all 0.2s ease;
-}
-
-.etiket:hover {
-  background: var(--ring);
   color: var(--text);
-}
-
-.etiket.active {
-  background: var(--primary);
-  color: white;
-  font-weight: bold;
-}
-
-.note-tag {
-  background-color: var(--input-bg);
-  color: var(--muted);
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-  transition: all 0.2s;
-  display: inline-flex;
-  align-items: center;
-}
-
-.note-tag:hover {
-  background-color: var(--ring);
-  color: var(--text);
-  transform: scale(1.05);
+  flex-grow: 1;
+  overflow-y: auto;
 }
 
 .note-tag::before {
   content: '#';
   margin-right: 4px;
-  color: var(--primary);
+  color: var(--muted); /* Hashtag rengi yumuşatıldı */
+}
+.note-editor-content .ql-editor {
+  padding: 16px;
 }
 
-/* React Tags */
-.ReactTags__tags {
-    position: relative;
-    background: var(--input-bg);
-    border-radius: 12px;
-    padding: 8px;
-    border: 1px solid transparent;
-    transition: border-color .15s, box-shadow .15s;
+.note-editor-content .ql-editor.ql-blank::before {
+  color: var(--muted);
+  font-style: normal;
+  left: 16px;
 }
-
-.ReactTags__tags:focus-within {
-}
-
-.ReactTags__tagInput {
-    width: 100%;
-    display: inline-block;
-}
-.ReactTags__tagInput input.ReactTags__tagInputField,
-.ReactTags__tagInput input.ReactTags__tagInputField:focus {
-    height: auto;
-    margin-top: 8px;
-    font-size: 1em;
-    width: 100%;
-    border: none;
-    background: transparent;
-    color: var(--text);
-    outline: none;
-    padding: 4px 0;
-}
-
-.ReactTags__selected {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.ReactTags__selected span.ReactTags__tag {
-    background: var(--primary);
-    color: white;
-    font-size: 14px;
-    display: inline-block;
-    padding: 5px 10px;
-    margin: 0;
-    cursor: move;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-}
-.ReactTags__selected a.ReactTags__remove {
-    color: white;
-    margin-left: 8px;
-    cursor: pointer;
-    font-size: 16px;
-    line-height: 1;
-}
-.ReactTags__selected a.ReactTags__remove:hover {
-  color: #ffcdd2;
-}
-
-.ReactTags__suggestions {
-    position: absolute;
-    z-index: 10;
-    width: 100%;
-    left: 0;
-    top: 105%;
-}
-.ReactTags__suggestions ul {
-    list-style-type: none;
-    box-shadow: var(--shadow-lg);
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 8px;
-    margin: 0;
-}
-.ReactTags__suggestions li {
-    padding: 10px 12px;
-    margin: 0;
-    border-radius: 8px;
-}
-.ReactTags__suggestions li mark {
-    text-decoration: none;
-    background: none;
-    font-weight: 600;
-    color: var(--primary-strong);
-}
-.ReactTags__suggestions ul li.ReactTags__activeSuggestion {
-    background: var(--ring);
-    cursor: pointer;
-}
-
 
 .tag-input-container label {
   display: block;
@@ -665,13 +550,10 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;  
-  transition: all 0.2s ease-in-out;  
   gap: 6px;
-  padding: 6px 10px;
-  border: 1px solid var(--input-bg);
-  border-radius: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
   background-color: var(--input-bg);
   transition: all 0.2s ease;
   cursor: text; /* Tıklanabilir hissi verir */
@@ -679,8 +561,8 @@
 
 /* Odaklandığında çerçeveyi belirginleştir */
 .tag-input:focus-within {
-  border-color: var(--ring);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+  border-color: var(--ring); 
+  box-shadow: var(--focus-ring-shadow);
 }
 
 .tag-input .tag-list {
@@ -729,16 +611,8 @@
   font-size: 1em;
 }
 
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+.tag-input input::placeholder {
+  color: var(--muted);
 }
 
 .modal-actions {
@@ -798,8 +672,8 @@
   outline: none;
   background: var(--input-bg);
   color: var(--text);
-  padding: 12px 14px;
-  border-radius: 10px;
+  padding: 14px 16px;
+  border-radius: 12px;
   transition: border-color .2s ease, box-shadow .2s ease;
   font-family: inherit;
 }
@@ -809,8 +683,8 @@
 }
 
 .note-editor-title:focus, .note-editor-content:focus {
-  border-color: var(--ring);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+  border-color: var(--ring); 
+  box-shadow: var(--focus-ring-shadow);
 }
 
 .note-editor-content {
@@ -900,7 +774,7 @@
   width: 20px;
   left: 4px;
   bottom: 4px;
-  background-color: white;
+  background-color: var(--primary-contrast, white);
   transition: .4s;
 }
 
@@ -909,7 +783,7 @@
 }
 
 .switch input:focus + .slider {
-  box-shadow: 0 0 1px var(--primary);
+  box-shadow: var(--focus-ring-shadow);
 }
 
 .switch input:checked + .slider:before {

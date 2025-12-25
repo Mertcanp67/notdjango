@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-
+import { IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+ 
 const stringToHslColor = (str, s, l) => {
   if (!str) return `hsl(0, 0%, 80%)`;
   let hash = 0;
@@ -45,9 +47,11 @@ export const TagInput = ({ tags, setTags }) => {
       <div className="tag-input">
         <ul className="tag-list">
           {tags.map((tag, index) => (
-            <li key={index} className="tag-item" style={{ backgroundColor: stringToHslColor(tag, 50, 30), color: stringToHslColor(tag, 50, 85) }}>
+            <li key={index} className="tag-item" style={{ backgroundColor: stringToHslColor(tag, 50, 30), color: stringToHslColor(tag, 50, 85), display: 'flex', alignItems: 'center', gap: '4px' }}>
               {tag}
-              <button type="button" className="remove-tag" onClick={() => removeTag(index)}>×</button>
+              <IconButton size="small" onClick={() => removeTag(index)} sx={{ color: 'inherit', p: '2px' }}>
+                <CloseIcon fontSize="inherit" />
+              </IconButton>
             </li>
           ))}
         </ul>

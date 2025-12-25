@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { CategoryMap } from "./sabitler.jsx";
 import ReactMarkdown from 'react-markdown';
+import { Button, IconButton, Tooltip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 const EditableNoteComponent = React.forwardRef(({ note, onStartEdit, onDelete, currentUser, isAdmin, animationDelay, extraClassName, ...props }, ref) => {
     const [showConfirm, setShowConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [isClosingConfirm, setIsClosingConfirm] = useState(false);
   
     const handleDeleteWithAnimation = () => {
       setIsDeleting(true);
@@ -12,15 +14,11 @@ const EditableNoteComponent = React.forwardRef(({ note, onStartEdit, onDelete, c
   
       setTimeout(() => {
         onDelete(note.id);
-      }, 400);
+      }, 400); // CSS'deki .deleting animasyon süresiyle eşleşmelidir
     };
 
     const handleCloseConfirm = () => {
-      setIsClosingConfirm(true);
-      setTimeout(() => {
-        setShowConfirm(false);
-        setIsClosingConfirm(false);
-      }, 300);
+      setShowConfirm(false);
     }
   
     const isOwner = note.owner.toLowerCase() === currentUser.toLowerCase(); 
@@ -59,17 +57,21 @@ const EditableNoteComponent = React.forwardRef(({ note, onStartEdit, onDelete, c
           <div className="note-actions">
             {canEditOrDelete ? ( 
               <>
-                <button className="btn secondary" onClick={() => onStartEdit(note)}>
-                    Düzenle
-                  </button>
-                <button className="btn danger" onClick={() => setShowConfirm(true)}>
-                  Sil
-                </button>
+                <Tooltip title="Düzenle">
+                  <IconButton size="small" onClick={() => onStartEdit(note)}>
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Sil">
+                  <IconButton size="small" onClick={() => setShowConfirm(true)} color="error">
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
               </>
             ) : (
-              <button className="btn ghost" disabled>
+              <Button variant="text" size="small" disabled>
                 ⛔ Erişim Yok
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -92,21 +94,32 @@ const EditableNoteComponent = React.forwardRef(({ note, onStartEdit, onDelete, c
             </div>
         )}
   
-      {showConfirm && (
-          <div className={`delete-confirm-overlay ${isClosingConfirm ? 'closing' : ''}`}>
-            <div className={`delete-confirm-box ${isClosingConfirm ? 'closing' : ''}`}>
-                <p>Bu notu kalıcı olarak silmek istediğinize emin misiniz?</p>
-                <div className="note-actions">
-                    <button className="btn danger" onClick={handleDeleteWithAnimation}>
-                        Evet, Sil
-                    </button>
-                    <button className="btn secondary" onClick={handleCloseConfirm}>
-                        Vazgeç
-                    </button>
-                </div>
-            </div>
-          </div>
-      )}
+      <Dialog
+        open={showConfirm}
+        onClose={handleCloseConfirm}
+        PaperProps={{
+          sx: {
+            borderRadius: 'var(--radius)',
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
+            boxShadow: 'var(--shadow-lg)',
+            color: 'var(--text)'
+          }
+        }}
+      >
+        <DialogTitle>Notu Sil</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: 'var(--muted)' }}>
+            Bu notu kalıcı olarak silmek istediğinize emin misiniz?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ padding: '16px 24px' }}>
+          <Button onClick={handleCloseConfirm} sx={{ color: 'var(--muted)' }}>Vazgeç</Button>
+          <Button onClick={handleDeleteWithAnimation} color="error" variant="contained" autoFocus>
+            Evet, Sil
+          </Button>
+        </DialogActions>
+      </Dialog>
       </li>
     );
 });

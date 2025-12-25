@@ -1,26 +1,31 @@
 import React from 'react';
+import { Chip, Box, Typography } from '@mui/material';
 
 const EtiketBulutu = ({ tags, onTagClick, selectedTag }) => {
   return (
     <div className="etiket-bulutu">
-      <h4>Etiketler</h4>
-      <div className="etiket-listesi">
-        <button
-          className={`etiket ${!selectedTag ? 'active' : ''}`}
+      <Typography variant="h6" component="h4" gutterBottom>Etiketler</Typography>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+        <Chip
+          label="Tümü"
           onClick={() => onTagClick(null)}
-        >
-          Tümü
-        </button>
+          variant={!selectedTag ? 'filled' : 'outlined'}
+          color="primary"
+          size="small"
+          clickable
+        />
         {tags.map((tag) => (
-          <button
+          <Chip
             key={tag}
-            className={`etiket ${selectedTag === tag ? 'active' : ''}`}
+            label={tag}
             onClick={() => onTagClick(tag)}
-          >
-            {tag}
-          </button>
+            variant={selectedTag === tag ? 'filled' : 'outlined'}
+            color="primary"
+            size="small"
+            clickable
+          />
         ))}
-      </div>
+      </Box>
     </div>
   );
 };
