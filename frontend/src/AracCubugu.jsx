@@ -8,14 +8,12 @@ import { NoteStats } from './NotIstatistikleri';
 export function Toolbar({ 
   notes, 
   tags, 
-  categories, 
   onTagClick, 
   selectedTag, 
   onSwitchToTrashView,
   currentUser,
   onLogout,
-  isAdmin,
-  onManageCategories
+  isAdmin
 }) {
   return (
     <div className="sidebar">
@@ -30,10 +28,8 @@ export function Toolbar({
         <NoteStats 
           notes={notes}
           tags={tags}
-          categories={categories}
           onTagClick={onTagClick}
           selectedTag={selectedTag}
-          onManageCategories={onManageCategories}
         />
         <Button fullWidth variant="outlined" color="secondary" onClick={onSwitchToTrashView} startIcon={<DeleteIcon />} sx={{ mt: 2 }}>
           Çöp Kutusu

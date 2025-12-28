@@ -8,25 +8,11 @@ import { Auth } from './KimlikDogrulama.jsx';
 import { CopKutusu } from "./CopKutusu";
 import { Toolbar } from './AracCubugu.jsx';
 import { Header } from './Baslik.jsx';
-import NotListesi from './NotListesi.jsx';
-import { KategoriYonetimiModal } from './KategoriYonetimiModal.jsx';
-import { AddNoteModal, EditNoteModal, ShareModal } from './Modallar.jsx';
-import { 
-    listNotes,
-    listCategories,
-    listTags,
-    createNote,
-    trashNote,
-    updateNote,
-    shareNote,
-    togglePinNote,
-    createCategory,
-    updateCategory,
-    deleteCategory,
-    authFetch
-} from './api.js';
+import NotListesi from "./NotListesi.jsx";
+import { AddNoteModal, EditNoteModal, ShareModal } from "./Modallar.jsx";
+// 👇 DİKKAT: Hem apiFetch hem authFetch import edildi
+import { apiFetch, authFetch } from "./api.js"; 
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const getMuiTheme = (mode) => createTheme({
   palette: {
     mode,
@@ -93,7 +79,6 @@ export default function Uygulama() {
   const [view, setView] = useState('main');
   const [publicNoteUuid, setPublicNoteUuid] = useState(null);
   const [notes, setNotes] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -102,14 +87,12 @@ export default function Uygulama() {
   const [isSuccessVisible, setIsSuccessVisible] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [sharingNoteUrl, setSharingNoteUrl] = useState('');
   const [editingNote, setEditingNote] = useState(null);
   const [selectedTag, setSelectedTag] = useState(null);
   const [draggedNoteId, setDraggedNoteId] = useState(null);
   const [dragOverNoteId, setDragOverNoteId] = useState(null);
-
 
   const [token, setToken] = useState(localStorage.getItem("authToken"));
   const [currentUser, setCurrentUser] = useState(
@@ -128,7 +111,8 @@ export default function Uygulama() {
 
   const reloadTags = useCallback(async () => {
     try {
-      const tagsData = await listTags();
+      // ✅ apiFetch ile düzeltildi
+      const tagsData = await apiFetch("/api/tags/");
       setTags(tagsData);
     } catch (e) {
       console.error("Etiketler yeniden yüklenirken hata oluştu:", e);
@@ -139,40 +123,32 @@ export default function Uygulama() {
     localStorage.removeItem("authToken");
     localStorage.removeItem("currentUser");
     localStorage.removeItem("isAdmin");
-    setCurrentUser("");
     setToken(null);
     setIsAdmin(false);
   }, []);
 
   const debouncedSearchTerm = useDebounce(search, 500);
-
+  
   const load = useCallback(async (term = "") => {
     try {
       setLoading(true);
-      const [notesData, categoriesData, tagsData] = await Promise.all([
-        listNotes(term),
-        listCategories(),
-        listTags(),
+      // ✅ apiFetch ile düzeltildi
+      const [notesData, tagsData] = await Promise.all([
+        apiFetch(`/api/notes/?search=${encodeURIComponent(term)}`),
+        apiFetch("/api/tags/"),
       ]);
       
       const normalizedNotes = notesData.map((n) => ({
         ...n,
-        // API'den gelen owner alanı bir obje ({username: '...'}) veya string olabilir.
-        // Her iki durumu da ele alarak sadece kullanıcı adını alıyoruz.
         owner: (typeof n.owner === 'object' && n.owner !== null ? n.owner.username : n.owner) ?? "Anonim",
-        // API'den `updated_at` gelmezse veya null ise, `created_at` alanını kullan.
         updated_at: n.updated_at || n.created_at,
       }));
       
-      normalizedNotes.sort((a, b) => b.is_pinned - a.is_pinned || a.order - b.order);
-      setNotes(normalizedNotes);
-      setCategories(categoriesData);
+      setNotes(normalizedNotes.sort((a, b) => b.is_pinned - a.is_pinned || a.order - b.order));
       setTags(tagsData);
 
     } catch (e) {
-      // Eğer API'den gelen hata kimlik doğrulama ile ilgiliyse (örn: 401),
-      // token geçersiz demektir. Kullanıcıyı otomatik olarak çıkışa yönlendir.
-      if (e.message.includes("401") || e.message.includes("Authentication credentials")) {
+      if (e.message && (e.message.includes("401") || e.message.includes("Authentication credentials"))) {
         handleLogout();
       } else {
         setError(e.message);
@@ -194,7 +170,6 @@ export default function Uygulama() {
       load(debouncedSearchTerm);
     } else {
       setNotes([]);
-      setCategories([]);
       localStorage.removeItem("currentUser");
     }
   }, [token, currentUser, debouncedSearchTerm, load]);
@@ -215,7 +190,6 @@ export default function Uygulama() {
     }, 2500);
   };
 
-
   const handleRegister = async (username, password, password2, email) => {
     if (!username || !password || !password2 || !email) {
       setError("Tüm alanlar zorunludur!");
@@ -229,7 +203,7 @@ export default function Uygulama() {
     try {
       setLoading(true);
       setError("");
-
+      // ⚠️ Burası authFetch kalmalı (Kayıt olurken token yok)
       await authFetch("/api/auth/registration/", {
         username,
         password1: password,
@@ -254,6 +228,7 @@ export default function Uygulama() {
     try {
       setLoading(true);
       setError("");
+      // ⚠️ Burası authFetch kalmalı (Giriş yaparken token yok)
       const data = await authFetch("/api/auth/login/", {
         username,
         password,
@@ -281,26 +256,28 @@ export default function Uygulama() {
     }
   };
 
-const onAdd = useCallback(async (noteData) => {
+  const onAdd = useCallback(async (noteData) => {
     if (!noteData.title.trim()) return;
     try {
       setLoading(true);
       setError("");
-      const created = await createNote(noteData);
+      // ✅ apiFetch ile düzeltildi (Token gider)
+      const created = await apiFetch("/api/notes/", {
+        method: "POST",
+        body: JSON.stringify(noteData), // JSON.stringify eklendi (apiFetch otomatik yapmıyorsa diye)
+      });
       const normalized = {
         ...created,
-        owner: created.owner ?? currentUser,
-        // API'den `updated_at` gelmezse, `created_at` veya anlık zamanı kullan
+        owner: (typeof created.owner === 'object' && created.owner !== null ? created.owner.username : created.owner) ?? currentUser,
         updated_at: created.updated_at || created.created_at || new Date().toISOString(),
       };
-      setNotes((prev) => [normalized, ...prev]);
+      setNotes((prev) => [normalized, ...prev].sort((a, b) => b.is_pinned - a.is_pinned || a.order - b.order));
       
-      setIsAddModalOpen(false); // Modalı doğrudan kapat
-      reloadTags(); // Etiketleri yeniden yükle
+      setIsAddModalOpen(false); 
+      reloadTags(); 
       showSuccess("Not başarıyla eklendi!");
 
     } catch (e) {
-      console.error("Not eklenirken hata:", e); // Hata ayıklama için eklendi
       setError(e.message);
     } finally {
       setLoading(false);
@@ -312,53 +289,41 @@ const onAdd = useCallback(async (noteData) => {
   }, []);
 
   const onTrash = useCallback(async (id) => {
-    // İşlem sırasında geri bildirim vermek ve hata durumunda geri almak için
-    // orijinal notları saklıyoruz.
     const originalNotes = notes;
-    // Arayüzü hemen güncelleyerek kullanıcıya anında geri bildirim veriyoruz (Optimistic Update).
     setNotes(prev => prev.filter(n => n.id !== id));
 
     try {
-      // API isteğini arka planda gönderiyoruz.
-      await trashNote(id);
-
-      // İşlem başarılı olursa, arayüz zaten güncellenmişti.
-      // Çöp kutusunun ve etiketlerin durumunu güncelliyoruz.
-      reloadTags(); // Etiket listesini güncelle
+      // ✅ apiFetch ile düzeltildi
+      await apiFetch(`/api/notes/${id}/trash/`, { method: "POST" });
+      reloadTags(); 
       showSuccess("Not başarıyla çöpe taşındı!");
     } catch (e) {
       setError("Çöpe taşıma başarısız: " + e.message);
-      // Hata durumunda, arayüzü eski haline geri döndürüyoruz.
       setNotes(originalNotes);
     }
   }, [notes, reloadTags]);
 
   const handleNoteRestored = useCallback(() => {
     showSuccess("Not başarıyla geri getirildi!");
-    // Ana not listesini arka planda yeniden yükle
-    load();
-    // CopKutusu bileşeni kendi kendini zaten yenilediği için
-    // bu satır gereksiz bir yeniden render'a neden oluyordu.
-    // setNotesVersion(v => v + 1);
-  }, [load]);
+    load(debouncedSearchTerm);
+  }, [load, debouncedSearchTerm]);
 
   const onSave = useCallback(async (note) => {
-    // Düzenleme modalından gelen 'note' verisi, kategori ID'sini içerir.
     const payload = {
         title: note.title,
         content: note.content,
         is_private: note.is_private,
-        tags: note.tags, // Artık etiketler zaten string dizisi
-        category: note.category, // API'ye kategori ID'sini gönder
+        tags: note.tags, 
     };
 
     try {
       setError("");
-      // API'den güncellenmiş not dönebilir (200 OK) veya boş dönebilir (204 No Content).
-      const updatedFromServer = await updateNote(note.id, payload);
+      // ✅ apiFetch ile düzeltildi
+      const updatedFromServer = await apiFetch(`/api/notes/${note.id}/`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
 
-      // Sunucudan tam not nesnesi döndüyse onu kullan, dönmediyse (204 No Content)
-      // yerel veriyi ve kategori nesnesini birleştirerek UI'ı güncelle.
       let finalNote;
       if (updatedFromServer && Object.keys(updatedFromServer).length > 0) {
           finalNote = {
@@ -367,31 +332,24 @@ const onAdd = useCallback(async (noteData) => {
               updated_at: updatedFromServer.updated_at || new Date().toISOString(),
           };
       } else {
-          // Sunucudan veri gelmediyse, elimizdeki verilerle notu yeniden oluştur.
-          const categoryObject = categories.find(c => c.id === payload.category);
-          finalNote = { 
-              ...note, // Modal'dan gelen temel not verileri (id, vs.)
-              ...payload, // Güncellenen alanlar
-              category: categoryObject, // ID yerine tam nesneyi koy
-              updated_at: new Date().toISOString(), // Güncelleme zamanını ayarla
-          };
+          finalNote = { ...note, ...payload, updated_at: new Date().toISOString() };
       }
       setNotes((prev) => prev.map((n) => (n.id === note.id ? finalNote : n)));
 
-      reloadTags(); // Etiketleri yeniden yükle
+      reloadTags(); 
       showSuccess("Not başarıyla güncellendi!");
 
     } catch (e) {
       setError("Güncelleme başarısız: Yetkiniz olmayabilir. " + e.message);
     }
-  }, [reloadTags, categories, currentUser]);
+  }, [reloadTags, currentUser]);
 
   const handleShareNote = async (note) => {
     try {
-      const updatedNote = await shareNote(note.id);
-      // Update the note in the main notes list
+      // ✅ apiFetch ile düzeltildi
+      const updatedNote = await apiFetch(`/api/notes/${note.id}/share/`, { method: "POST" });
       setNotes(prev => prev.map(n => n.id === updatedNote.id ? updatedNote : n));
-      // Update the note in the edit modal if it's open
+      
       if (editingNote && editingNote.id === updatedNote.id) {
         setEditingNote(updatedNote);
       }
@@ -412,63 +370,19 @@ const onAdd = useCallback(async (noteData) => {
     const noteToPin = notes.find(n => n.id === id);
     if (!noteToPin) return;
 
-    // İyimser Güncelleme
     const updatedNote = { ...noteToPin, is_pinned: !noteToPin.is_pinned };
     const newNotes = notes.map(n => n.id === id ? updatedNote : n);
-    // Sıralamayı hemen arayüzde yansıt
     newNotes.sort((a, b) => b.is_pinned - a.is_pinned || a.order - b.order);
     setNotes(newNotes);
 
     try {
-      await togglePinNote(id);
+      // ✅ apiFetch ile düzeltildi
+      await apiFetch(`/api/notes/${id}/toggle_pin/`, { method: "POST" });
     } catch (err) {
       setError("Pinleme durumu güncellenemedi: " + err.message);
-      setNotes(originalNotes); // Hata durumunda geri al
+      setNotes(originalNotes); 
     }
   }, [notes]);
-
-  const handleCreateCategory = async (categoryData) => {
-    try {
-      const newCategory = await createCategory(categoryData);
-      setCategories(prev => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)));
-      showSuccess("Kategori başarıyla oluşturuldu!");
-    } catch (err) {
-      setError("Kategori oluşturulamadı: " + err.message);
-      throw err; // Hatanın modal içinde de yakalanabilmesi için tekrar fırlat
-    }
-  };
-
-  const handleUpdateCategory = async (id, categoryData) => {
-    try {
-      const updatedCategory = await updateCategory(id, categoryData);
-      setCategories(prev => prev.map(cat => cat.id === id ? updatedCategory : cat).sort((a, b) => a.name.localeCompare(b.name)));
-      // Notların da güncel kategori bilgisine sahip olması için yeniden yükle
-      load(debouncedSearchTerm);
-      showSuccess("Kategori başarıyla güncellendi!");
-    } catch (err) {
-      setError("Kategori güncellenemedi: " + err.message);
-      throw err;
-    }
-  };
-
-  const handleDeleteCategory = async (id) => {
-    try {
-      await deleteCategory(id);
-      setCategories(prev => prev.filter(cat => cat.id !== id));
-      // Bu kategoriye sahip notlar artık kategorisiz olacak.
-      // Arayüzü güncellemek için notları yeniden yükle.
-      load(debouncedSearchTerm);
-      showSuccess("Kategori başarıyla silindi!");
-    } catch (err) {
-      // Backend'den gelen hatayı kontrol et, kategori kullanımdaysa farklı bir mesaj gösterilebilir.
-      if (err.message.includes("still in use")) {
-        setError("Kategori silinemedi. Önce bu kategoriye ait notları başka bir kategoriye taşıyın.");
-      } else {
-        setError("Kategori silinemedi: " + err.message);
-      }
-      throw err;
-    }
-  };
 
   const handleStartEdit = useCallback((note) => {
     setEditingNote(note);
@@ -480,15 +394,12 @@ const onAdd = useCallback(async (noteData) => {
   }, []);
 
   const handleSaveAndClose = async (noteToSave) => {
-    // Modal'dan gelen güncel not verisini doğrudan onSave fonksiyonuna iletiyoruz.
-    // Önceki hali, asenkron state güncellemeleri nedeniyle eski (stale) veriyi kullanıyordu.
-    await onSave(noteToSave);
     handleCloseEditModal();
+    onSave(noteToSave);
   };
 
   const handleDragStart = (e, noteId) => {
     const note = notes.find(n => n.id === noteId);
-    // Sabitlenmiş notların sürüklenmesini engelle
     if (note?.is_pinned) {
       e.preventDefault();
       return;
@@ -499,8 +410,6 @@ const onAdd = useCallback(async (noteData) => {
 
   const handleDragOver = (e, noteId) => {
     const overNote = notes.find(n => n.id === noteId);
-    // Sabitlenmiş bir notun üzerine sürükleniyorsa, bırakmaya izin verme.
-    // e.preventDefault() çağrılmazsa, tarayıcı varsayılan olarak bırakmayı engeller.
     if (overNote?.is_pinned) {
       return;
     }
@@ -520,40 +429,36 @@ const onAdd = useCallback(async (noteData) => {
         return;
     }
 
-    // Sürüklenen veya bırakılan not yoksa veya aynı not ise işlemi durdur
     if (!draggedNoteId || !dropNoteId || draggedNoteId === dropNoteId) {
       setDraggedNoteId(null);
       setDragOverNoteId(null);
       return;
     }
 
-    const originalNotes = [...notes]; // Hata durumunda geri dönmek için orijinal sırayı sakla
+    const originalNotes = [...notes]; 
     const draggedIndex = notes.findIndex(n => n.id === draggedNoteId);
     const dropIndex = notes.findIndex(n => n.id === dropNoteId);
 
     if (draggedIndex === -1 || dropIndex === -1) return;
 
-    // İyimser Arayüz Güncellemesi (Optimistic UI Update)
-    // Arayüzü hemen güncelleyerek kullanıcıya anında geri bildirim veriyoruz.
     const newNotes = [...notes];
     const [draggedItem] = newNotes.splice(draggedIndex, 1);
     newNotes.splice(dropIndex, 0, draggedItem);
     setNotes(newNotes);
 
-    // Sürükleme durumlarını temizle
     setDraggedNoteId(null);
     setDragOverNoteId(null);
 
-    // Backend'e yeni sırayı kaydet
     try {
       const orderedIds = newNotes.map(n => n.id);
-      // `updateNoteOrder` fonksiyonu sunucunun beklemediği bir POST isteği gönderiyordu.
-      // Sunucu bu işlem için PUT metodunu beklediğinden, isteği `authFetch` kullanarak
-      // doğrudan ve doğru metodla yapacak şekilde güncelliyoruz.
-      await authFetch('/api/notes/update_order/', { method: 'PUT', body: { ordered_ids: orderedIds } });
+      // ✅ apiFetch ile düzeltildi
+      await apiFetch('/api/notes/update_order/', { 
+        method: 'PUT', 
+        body: JSON.stringify({ ordered_ids: orderedIds }) 
+      });
     } catch (err) {
       setError("Not sırası güncellenemedi: " + err.message);
-      setNotes(originalNotes); // Hata olursa arayüzü eski haline getir
+      setNotes(originalNotes); 
     }
   };
 
@@ -596,13 +501,11 @@ const onAdd = useCallback(async (noteData) => {
           <Toolbar
             notes={notes}
             tags={tags}
-            categories={categories}
             onTagClick={(tag) => setSelectedTag(tag)}
             selectedTag={selectedTag}
             onSwitchToTrashView={() => setView('trash')}
             currentUser={currentUser}
             onLogout={handleLogout}
-            onManageCategories={() => setIsCategoryModalOpen(true)}
             isAdmin={isAdmin}
           />
 
@@ -643,7 +546,7 @@ const onAdd = useCallback(async (noteData) => {
               <CopKutusu
                 onSwitchToMainView={() => {
                   setView('main');
-                  load(); // Notları yeniden yükle
+                  load(); 
                 }}
                 onNoteRestored={handleNoteRestored}
               />
@@ -654,25 +557,15 @@ const onAdd = useCallback(async (noteData) => {
             isOpen={isAddModalOpen}
             onClose={handleCloseAddModal}
             onAdd={onAdd}
-            categories={categories}
             loading={loading}
           />
           <EditNoteModal
             isOpen={isEditModalOpen}
             onClose={handleCloseEditModal}
             note={editingNote}
-            categories={categories}
             onSave={handleSaveAndClose}
             onShare={handleShareNote}
             loading={loading}
-          />
-          <KategoriYonetimiModal
-            isOpen={isCategoryModalOpen}
-            onClose={() => setIsCategoryModalOpen(false)}
-            categories={categories}
-            onCreate={handleCreateCategory}
-            onUpdate={handleUpdateCategory}
-            onDelete={handleDeleteCategory}
           />
           <ShareModal 
             isOpen={isShareModalOpen}

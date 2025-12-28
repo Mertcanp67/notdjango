@@ -1,26 +1,16 @@
 from rest_framework import serializers
 from taggit.serializers import TagListSerializerField, TaggitSerializer
 from taggit.models import Tag
-from .models import Note, Category
-
+from .models import Note
+from .models import Category
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ("id", "name", "slug")
 
-class CategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Category    
-        fields = ['id', 'name', 'color']
-        read_only_fields = ['owner']
-
 class NoteSerializer(TaggitSerializer, serializers.ModelSerializer):
-    owner = serializers.CharField(source="owner.username", read_only=True)
+    author_username = serializers.CharField(source="owner.username", read_only=True)
     tags = TagListSerializerField()
-    category = CategorySerializer(read_only=True)
-    category_id = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(), source='category', write_only=True, required=False, allow_null=True
-    )
     
     ALLOWED_TAGS = [
         "p", "strong", "em", "ul", "ol", "li", "br", "h1", "h2",
@@ -40,11 +30,10 @@ class NoteSerializer(TaggitSerializer, serializers.ModelSerializer):
             "content",
             "created_at",
             "updated_at",
-            "owner",
-            "is_public",
+            "author_username",
+            "is_shared",
+            "is_private",
             "share_uuid",
-            "category",
-            "category_id",
             "tags",
             "is_pinned",
             "order"
@@ -56,14 +45,6 @@ class NoteSerializer(TaggitSerializer, serializers.ModelSerializer):
             'share_uuid': {'read_only': True}
         }
 
-    def validate_category_id(self, value):
-        """
-        Kullanıcının sadece kendi kategorisini seçebilmesini sağlar.
-        """
-        if value and value.owner != self.context['request'].user:
-            raise serializers.ValidationError("🚫")
-        return value
-
     def validate_tags(self, value):
         """
         Etiketlerdeki olası '##' gibi istenmeyen karakterleri temizler.
@@ -73,9 +54,17 @@ class NoteSerializer(TaggitSerializer, serializers.ModelSerializer):
         clean_tags = [tag.strip().lstrip('#') for tag in value if tag.strip()]
         return clean_tags
 
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'color']
+        extra_kwargs = {
+            'id': {'read_only': True},
+        }
+
+
 class PublicNoteSerializer(serializers.ModelSerializer):
     tags = TagListSerializerField(read_only=True)
-    category = CategorySerializer(read_only=True)
     owner = serializers.CharField(source="owner.username", read_only=True)
 
     class Meta:
@@ -85,7 +74,6 @@ class PublicNoteSerializer(serializers.ModelSerializer):
             "content",
             "created_at",
             "updated_at",
-            "category",
             "tags",
             "owner",
         ]

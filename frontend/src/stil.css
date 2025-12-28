@@ -34,7 +34,7 @@
     }
     .input::placeholder, .textarea::placeholder{ color: var(--muted) }
     .input:focus, .textarea:focus{
-      border-color: var(--ring); 
+      border-color: var(--ring);
       box-shadow: var(--focus-ring-shadow);
     }
 
@@ -45,19 +45,19 @@
       font-weight: 600;
       transition: all .2s ease;
     }
-    .btn:hover{ 
+    .btn:hover{
       background:var(--input-bg-hover);
       transform: translateY(-2px);
       box-shadow: var(--shadow-md);
     }
-    .btn:active{ 
+    .btn:active{
       transform: translateY(0px);
       box-shadow: none;
     }
 
     .btn.primary{
       background: linear-gradient(135deg, var(--primary-strong), var(--primary));
-      color:#fff; 
+      color:#fff;
     }
     .btn.primary:hover {
       box-shadow: var(--shadow-lg), var(--primary-glow);
@@ -67,12 +67,12 @@
     .btn.danger{ background: var(--danger-bg); border:1px solid var(--danger-border); color:var(--danger-text) }
     .btn.danger:hover{ background:var(--danger-bg-hover) }
 
-    .grid{
-      display:grid; 
-      gap: 24px; /* Boşluklar artırıldı */
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    }
-
+        .notes-grid {
+          display: grid;
+          gap: 20px;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        }
+    
     .card{
         background: var(--card);
         border:1px solid var(--border);
@@ -84,29 +84,31 @@
     .note-card{
       display: flex;
       flex-direction: column;
-      height: 100%;
+      height: 100%; /* Griddeki kartların aynı hizada durmasını sağlar */
       background: var(--card);
-      border:1px solid var(--border);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 20px; /* Kart içi boşluk artırıldı */
-      /* Geçişler daha hızlı ve pürüzsüz hale getirildi */
-      transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
-      box-shadow: var(--shadow-md);
+      padding: 20px;
+      /* Daha modern ve akıcı bir görünüm için geçişleri ve gölgeyi güncelliyoruz */
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+      box-shadow: var(--shadow-sm); /* Başlangıçta daha hafif bir gölge */
+      /* Giriş animasyonu */
       opacity: 0;
-      transform: translateY(20px);
-      /* Animasyonun daha dinamik hissettirmesi için easing eklendi */
-      animation: slideInUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-      /* Tarayıcıya hangi özelliklerin değişeceğini bildirerek performansı artırır */
+      animation: slideInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
       will-change: transform, box-shadow, border-color;
+      position: relative;
     }
     .note-card:not(.deleting):hover {
-        transform: translateY(-5px); /* Kaldırma efekti biraz daha belirginleştirildi */
-        box-shadow: var(--shadow-xl); /* Gölge daha da belirginleşiyor */
-        border-color: var(--ring); /* Vurgu rengi daha yumuşak */
+        /* Hover durumunda kartı daha belirgin hale getiriyoruz */
+        transform: translateY(-5px) scale(1.01); /* Hafifçe yukarı kaldırıp büyütüyoruz */
+        box-shadow: var(--shadow-lg); /* Gölgeyi güçlendiriyoruz */
+        /* Kenarlık rengini ana tema rengiyle vurguluyoruz */
+        border-color: var(--primary);
     }
 
     .note-card.pinned {
-      border-left: 3px solid var(--primary);
+      border-left-width: 5px; /* Updated to match EditableNote */
+      border-left-color: var(--primary);
     }
 
     .note-card .pin-button {
@@ -122,49 +124,87 @@
         transform: scale(0.98);
     }
 
-    .note-content-wrapper {
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 0; /* Prevents flex item from overflowing its container */
-    }
-
-    .note-content-preview {
-      margin-top: 10px;
-      overflow: hidden;
+    .markdown-content {
       color: var(--muted);
       line-height: 1.5;
-    }
-
-    .note-content-preview .ql-editor {
+      font-size: 0.95rem;
       overflow: hidden;
+      /* Clamp the content to 3 lines */
       display: -webkit-box;
-      -webkit-line-clamp: 2; /* İçerik önizlemesi 2 satıra düşürüldü */
+      -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
-      padding: 0; /* Override Quill's default padding */
+    }
+    
+    .markdown-content .ql-editor {
+      padding: 0;
+    }
+    
+    .markdown-content p {
+        margin: 0 0 8px 0;
+    }
+    
+    .markdown-content p:last-child {
+        margin-bottom: 0;
     }
 
     .note-footer {
+      margin-top: auto; /* İtici güç bu */
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
-      align-items: flex-end;
-      margin-top: auto; /* Bu, footer'ı kartın en altına iter */
-      padding-top: 12px;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.8rem;
+      color: var(--muted);
     }
 
+    .note-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .note-footer .note-meta {
+      text-align: right;
+      flex-shrink: 0; /* Küçülmesini engelle */
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .note-footer .note-date {
+      font-size: inherit; /* Footer'dan gelen boyutu kullan */
+      color: inherit; /* Footer'dan gelen rengi kullan */
+    }
+    
+    .etiket {
+      background-color: var(--input-bg);
+      color: var(--muted);
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .etiket:hover {
+      background-color: var(--input-bg-hover);
+      color: var(--text);
+    }
+
+
     .note-title{
-      font-weight:600; font-size: 18px; margin:0; /* Başlık daha belirgin */
+      font-weight:600; font-size: 18px; margin:0;
     }
-    .note-date{
-      color:var(--muted); font-size:12.5px;
-    }
+
     .note-actions{
-      display:flex; 
-      gap:8px; 
+      display:flex;
+      gap:8px;
       align-items:center;
       opacity: 0;
       transform: translateY(4px);
-      /* Kart hover olduktan hemen sonra görünmesi için küçük bir gecikme eklendi */
       transition: opacity 0.2s ease 0.05s, transform 0.2s ease 0.05s;
     }
     .note-card:hover .note-actions {
@@ -173,10 +213,18 @@
     }
     .note-head{
       display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
+      /* Alt bilgiye geçtiği için alttaki boşluğu ve çizgiyi kaldırıyoruz */
+      padding-bottom: 0;
+      border-bottom: none;
+      margin-bottom: 0;
     }
 
     .note-head .note-meta {
-      font-size: 0.8em; color: var(--muted); display: flex; flex-direction: column; gap: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.8rem;
     }
 
     .footer-muted{
@@ -210,7 +258,7 @@
       gap: 14px;
     }
     .alert-success {
-        background-color: var(--success-bg); 
+        background-color: var(--success-bg);
         color: var(--success-text);
         padding: 10 px 20px;
         border-radius: 10px;
@@ -239,7 +287,7 @@
     .loading-bar {
         width: 30%;
         height: 100%;
-        background-color: var(--primary); 
+        background-color: var(--primary);
         border-radius: 2px;
         animation: slide-and-grow 1.5s infinite linear;
     }
@@ -363,7 +411,6 @@
   max-height: calc(100vh - 48px); /* height yerine max-height taşmayı önler */
   position: sticky;
   top: 24px;
-  /* Diğer içeriklerin altında kalmasını önlemek için z-index tanımlandı */
   z-index: var(--z-sticky);
   box-shadow: var(--shadow-lg);
 }
@@ -396,11 +443,14 @@
 }
 
 .sidebar-section-title {
-  margin: 0 0 15px;
-  color: var(--primary);
+  margin: 0 0 12px;
+  color: var(--text); /* Rengi ana metin rengi yapalım */
   border-bottom: 1px solid var(--border);
-  padding-bottom: 10px;
-  font-size: 1.1em;
+  padding-bottom: 8px;
+  font-size: 0.9rem; /* Biraz küçültelim */
+  font-weight: 600;
+  text-transform: uppercase; /* Büyük harf yapalım */
+  letter-spacing: 0.05em; /* Harf aralığı */
 }
 
 
@@ -424,7 +474,7 @@
 
 @keyframes fadeOutAndShrink {
   from {
-    opacity: 1; 
+    opacity: 1;
     transform: scaleY(1);
     max-height: 200px; /* Not kartının maksimum yüksekliğinden büyük bir değer */
   }
@@ -561,12 +611,12 @@
 
 /* Odaklandığında çerçeveyi belirginleştir */
 .tag-input:focus-within {
-  border-color: var(--ring); 
+  border-color: var(--ring);
   box-shadow: var(--focus-ring-shadow);
 }
 
 .tag-input .tag-list {
-  display: contents; 
+  display: contents;
   padding: 0;
   margin: 0;
 }
@@ -576,11 +626,11 @@
   align-items: center;
   gap: 6px;
   padding: 5px 10px;
-  border-radius: 16px; 
+  border-radius: 16px;
   font-size: 0.9em;
   font-weight: 600;
   line-height: 1.4;
-  animation: fadeIn 0.2s ease-out; 
+  animation: fadeIn 0.2s ease-out;
 }
 
 .tag-input .remove-tag {
@@ -591,7 +641,7 @@
   cursor: pointer;
   font-size: 1.2em;
   line-height: 1;
-  color: inherit; 
+  color: inherit;
   opacity: 0.7;
   transition: opacity 0.2s;
 }
@@ -601,8 +651,8 @@
 }
 
 .tag-input input {
-  flex-grow: 1; 
-  min-width: 120px; 
+  flex-grow: 1;
+  min-width: 120px;
   border: none;
   outline: none;
   padding: 6px 2px;
@@ -627,7 +677,7 @@
 
 
 .modal-note-editor {
-  max-width: 720px; 
+  max-width: 720px;
 }
 
 .modal-header {
@@ -683,7 +733,7 @@
 }
 
 .note-editor-title:focus, .note-editor-content:focus {
-  border-color: var(--ring); 
+  border-color: var(--ring);
   box-shadow: var(--focus-ring-shadow);
 }
 
@@ -797,3 +847,407 @@
 .slider.round:before {
   border-radius: 50%;
 }
+
+/* ======================================== */
+/*          Modern Not Kartı Stilleri       */
+/* ======================================== */
+
+.note-card-modern {
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px; /* Biraz daha yuvarlak köşeler */
+  padding: 20px;
+  position: relative;
+  overflow: hidden; /* Köşelerden taşan elementleri gizle */
+  cursor: pointer;
+  
+  /* Pürüzsüz geçişler */
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  
+  /* Giriş animasyonu (mevcut animasyonu kullanıyoruz) */
+  opacity: 0;
+  animation: slideInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, box-shadow, border-color;
+}
+
+.note-card-modern:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-xl); /* Daha belirgin bir gölge */
+  border-color: var(--primary);
+}
+
+/* Sabitlenmiş notlar için stil */
+.note-card-modern.pinned {
+  /* Sabitlenmiş notların hover'da yukarı kalkmasını engelle */
+  transform: none; 
+  /* Sabitlenmiş olduğunu belirtmek için daha güçlü bir kenarlık */
+  border: 1px solid var(--primary);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Yüzen Aksiyon Butonları */
+.note-actions-floating {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 6px;
+  background: color-mix(in srgb, var(--card) 80%, transparent); /* Hafif yarı saydam arka plan */
+  backdrop-filter: blur(4px);
+  padding: 4px;
+  border-radius: 20px;
+  
+  /* Başlangıçta gizli */
+  opacity: 0;
+  transform: translateY(-10px) scale(0.9);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 10;
+}
+
+.note-card-modern:hover .note-actions-floating {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Sabitlenmiş notlarda butonları her zaman göster */
+.note-card-modern.pinned .note-actions-floating {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    background: transparent; /* Arka planı kaldır */
+    backdrop-filter: none;
+}
+
+.note-actions-floating .action-btn {
+  color: var(--muted);
+  background-color: transparent;
+  transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+.note-actions-floating .action-btn:hover {
+  color: var(--text);
+  background-color: var(--input-bg-hover);
+  transform: scale(1.1);
+}
+
+.note-actions-floating .action-btn.active {
+  color: var(--primary);
+}
+.note-actions-floating .action-btn.delete:hover {
+  color: var(--danger-text);
+  background-color: var(--danger-bg);
+}
+
+/* Not Gövdesi */
+.note-body {
+  flex-grow: 1; /* Footer'ı aşağı iter */
+  padding-bottom: 16px; /* Footer'dan ayırmak için boşluk */
+  min-height: 80px; /* Kartın çok küçülmesini engelle */
+}
+
+.note-title-modern {
+  font-size: 1.1rem; /* 17.6px */
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 12px 0;
+  
+  /* Uzun başlıkları kırp */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.note-preview-modern {
+  font-size: 0.9rem; /* 14.4px */
+  color: var(--muted);
+  line-height: 1.6;
+  
+  /* İçeriği 4 satırla sınırla */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
+/* Quill editörünün stillerini sıfırla */
+.note-preview-modern .ql-editor {
+  padding: 0;
+  line-height: inherit;
+  font-size: inherit;
+  overflow: visible;
+  white-space: normal;
+}
+.note-preview-modern .ql-editor p {
+  margin: 0;
+}
+
+/* Not Alt Bilgisi */
+.note-footer-modern {
+  margin-top: auto; /* Kendini en alta yapıştır */
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.8rem; /* 12.8px */
+  color: var(--muted);
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Taşmayı önlemek için */
+  min-width: 0; 
+}
+
+.footer-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.author-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: var(--primary-contrast);
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem; /* 12px */
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.author-name {
+  font-weight: 500;
+  color: var(--muted); /* Hiyerarşi için daha soluk renk */
+  /* Uzun isimlerin taşmasını engelle */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px; /* Genişliği sınırla */
+}
+
+.date-text {
+  white-space: nowrap; /* Tarihin alt satıra kaymasını engeller */
+}
+
+.separator {
+  color: var(--border);
+}
+
+/* Etiketler */
+.note-tags-container {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0; /* Küçülmesini engelle */
+}
+
+.note-tag-item {
+  padding: 2px 8px;
+  background-color: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.75rem; /* 12px */
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.note-tag-item:hover {
+  background-color: var(--input-bg-hover);
+  color: var(--text);
+  border-color: var(--ring);
+}
+
+/* ======================================== */
+/*         Not Kartı Üç Nokta Menüsü        */
+/* ======================================== */
+
+.note-card-menu-paper {
+  background-color: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-xl) !important;
+  border-radius: 10px !important;
+  margin-top: 8px !important;
+}
+
+.note-card-menu-paper .MuiMenuItem-root {
+  color: var(--text) !important;
+  font-size: 0.9rem !important;
+  padding: 8px 16px !important;
+  transition: background-color 0.2s ease;
+}
+
+.note-card-menu-paper .MuiMenuItem-root .MuiListItemIcon-root {
+  min-width: 36px !important;
+  color: var(--muted) !important;
+  transition: color 0.2s ease;
+}
+
+.note-card-menu-paper .MuiMenuItem-root:hover {
+  background-color: var(--input-bg-hover) !important;
+}
+
+.note-card-menu-paper .menu-item-danger {
+  color: var(--danger-text) !important;
+}
+
+.note-card-menu-paper .menu-item-danger:hover {
+  background-color: var(--danger-bg-hover) !important;
+}
+
+/* ======================================== */
+/*         Modern Kenar Çubuğu Listeleri    */
+/* ======================================== */
+
+/* Genel Liste Stili (Kategoriler için) */
+.sidebar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* Liste elemanları arası boşluk */
+}
+
+.sidebar-list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px; /* Daha modern yuvarlak köşeler */
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.sidebar-list-item:hover {
+  background-color: var(--input-bg-hover);
+  color: var(--text);
+}
+
+.sidebar-list-item.selected {
+  background-color: var(--primary-bg);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* Eleman adı (Kategori/Etiket adı) */
+.sidebar-list-item .item-name {
+  flex-grow: 1;
+  /* Uzun isimler için kırpma */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Not sayısı için badge */
+.sidebar-list-item .item-count {
+  font-size: 0.8em;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background-color: var(--input-bg);
+  color: var(--muted);
+  transition: all 0.2s ease;
+}
+
+.sidebar-list-item:hover .item-count {
+  background-color: var(--border);
+  color: var(--text);
+}
+
+.sidebar-list-item.selected .item-count {
+  background-color: var(--primary);
+  color: var(--primary-contrast);
+}
+
+/* Etiket Bulutu (Tag Cloud) Stili */
+.sidebar-tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.sidebar-tag {
+  padding: 4px 12px;
+  background-color: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-tag:hover {
+  background-color: var(--input-bg-hover);
+  color: var(--text);
+  border-color: var(--ring);
+  transform: translateY(-2px);
+}
+
+.sidebar-tag.selected {
+  background-color: var(--primary);
+  color: var(--primary-contrast);
+  border-color: var(--primary);
+  font-weight: 600;
+}
+
+/* Autocomplete açılır menüsü */
+.MuiAutocomplete-popper .MuiPaper-root {
+  background-color: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-lg) !important;
+  color: var(--text) !important;
+  border-radius: 12px !important;
+  margin-top: 4px !important;
+}
+
+.MuiAutocomplete-popper .MuiAutocomplete-option[aria-selected="true"] {
+  background-color: var(--primary-bg) !important;
+}
+
+.MuiAutocomplete-popper .MuiAutocomplete-option:hover {
+  background-color: var(--input-bg-hover) !important;
+}
+
+.privacy-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.privacy-status.private {
+  background-color: var(--danger-bg);
+  color: var(--danger-text);
+  border: 1px solid var(--danger-border);
+}
+
+.privacy-status.public {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+  border: 1px solid var(--success-border);
+}
+

@@ -1,190 +1,168 @@
-import uuid
 import google.generativeai as genai
-from rest_framework import viewsets, filters, permissions, status
+from django.conf import settings
+from django.db.models import Q
+from rest_framework import viewsets, permissions, status
+from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import action
-from rest_framework.response import Response
-from django.db import transaction
-from django.db.models import Q, Count
-from django.utils import timezone
-from datetime import timedelta
+from django_filters.rest_framework import DjangoFilterBackend
+from taggit.models import Tag
 from .models import Note, Category
 from .serializers import NoteSerializer, CategorySerializer, TagSerializer, PublicNoteSerializer
-from .permissions import IsOwnerOrReadOnly
-from .filters import NoteFilter 
-from taggit.models import Tag
+from .filters import NoteFilter
 
+# --- AI ETIKET OLUSTURUCU ---
+genai.configure(api_key=settings.GOOGLE_API_KEY)
+
+class AITagGeneratorView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        title = request.data.get("title", "")
+        content = request.data.get("content", "")
+        
+        if not title and not content:
+            return Response({"error": "Başlık veya içerik gerekli."}, status=400)
+
+        prompt = f"""
+        Aşağıdaki metni analiz et ve Türkçe olarak en uygun 3 ila 5 etiketi bul.
+        Sadece etiketleri virgül ile ayırarak yaz. Başka açıklama yapma.
+        
+        Başlık: {title}
+        İçerik: {content}
+        """
+
+        try:
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            response = model.generate_content(prompt)
+            tags_list = [tag.strip() for tag in response.text.strip().split(',') if tag.strip()]
+            return Response({"tags": tags_list})
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+# --- TAGS ---
+class TagCloudView(APIView):
+    """
+    Kullanıcıya ait notlardaki tüm etiketleri listeler.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        # Sadece mevcut kullanıcıya ait notların etiketlerini al
+        tags = Tag.objects.filter(note__owner=request.user).distinct()
+        serializer = TagSerializer(tags, many=True)
+        return Response(serializer.data)
+
+
+# --- NORMAL NOTLAR (Not Listesi) ---
 class NoteViewSet(viewsets.ModelViewSet):
     serializer_class = NoteSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filterset_class = NoteFilter 
-    filter_backends = [filters.SearchFilter] 
-    search_fields = ["title", "content", "owner__username", "tags__name"]
-
-    def get_permissions(self):
-        if self.request.user and self.request.user.is_staff:
-            return [permissions.IsAuthenticated()]
-        return [permissions.IsAuthenticated(), IsOwnerOrReadOnly()]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = NoteFilter
 
     def get_queryset(self):
-        user = self.request.user
-        base_query = Note.objects.select_related('owner', 'category').prefetch_related('tags').filter(is_deleted=False)
+        # Arama parametresi var mı?
+        queryset = Note.objects.filter(owner=self.request.user, is_deleted=False)
+        search_query = self.request.query_params.get('search', None)
         
-        if user.is_staff:
-            return base_query.order_by("order", "-created_at")
-
-        return base_query.filter(
-            Q(owner=user) | 
-            Q(is_public=True)
-        ).order_by("order", "-created_at")
+        if search_query:
+            queryset = queryset.filter(
+                Q(title__icontains=search_query) | 
+                Q(content__icontains=search_query) |
+                Q(tags__name__icontains=search_query)
+            ).distinct()
+            
+        return queryset.order_by('-is_pinned', 'order', '-updated_at')
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
-    def perform_destroy(self, instance):
-        print(f"--- SOFT DELETE DEVREDE: Not ID {instance.id} silinmedi, gizlendi. ---")
-        instance.is_deleted = True
-        instance.save()
+    # 1. NOTU ÇÖPE ATMA (Soft Delete)
+    @action(detail=True, methods=['post'])
+    def trash(self, request, pk=None):
+        note = self.get_object()
+        note.is_deleted = True
+        note.save()
+        return Response({'status': 'not çöp kutusuna taşındı'})
 
-    @action(detail=True, methods=['post'], url_path='toggle_pin')
+    # 2. PINLEME (Sabitleme)
+    @action(detail=True, methods=['post'])
     def toggle_pin(self, request, pk=None):
         note = self.get_object()
-        if note.owner != request.user:
-            return Response(
-                {"error": "You do not have permission to pin this note."},
-                status=status.HTTP_403_FORBIDDEN
-            )
         note.is_pinned = not note.is_pinned
         note.save()
-        serializer = self.get_serializer(note)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'status': 'pin durumu değişti', 'is_pinned': note.is_pinned})
 
+    # 3. PAYLAŞMA
     @action(detail=True, methods=['post'])
     def share(self, request, pk=None):
         note = self.get_object()
-        note.is_public = not note.is_public
-        note.save()
-        serializer = self.get_serializer(note)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['post'])
-    def update_order(self, request):
-        note_ids = request.data.get('note_ids', [])
-        if not isinstance(note_ids, list):
-            return Response({"error": "note_ids must be a list"}, status=status.HTTP_400_BAD_REQUEST)
-
-        user = request.user
-        with transaction.atomic():
-            for index, note_id in enumerate(note_ids):
-                Note.objects.filter(id=note_id, owner=user).update(order=index)
+        import uuid
+        if not note.share_uuid:
+            note.share_uuid = uuid.uuid4()
         
-        return Response({'status': 'note order updated'}, status=status.HTTP_200_OK)
+        note.is_shared = not note.is_shared
+        note.save()
+        return Response(NoteSerializer(note).data)
 
+    # 4. SIRALAMA GÜNCELLEME (Sürükle Bırak)
+    @action(detail=False, methods=['put'])
+    def update_order(self, request):
+        ordered_ids = request.data.get('ordered_ids', [])
+        for index, note_id in enumerate(ordered_ids):
+            try:
+                note = Note.objects.get(id=note_id, owner=request.user)
+                note.order = index
+                note.save()
+            except Note.DoesNotExist:
+                continue
+        return Response({'status': 'sıralama güncellendi'})
+
+
+# --- PUBLIC NOTES (Paylaşılan Notlar) ---
 class PublicNoteViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    A viewset for retrieving publicly shared notes via their UUID.
+    Paylaşım linki (UUID) ile bir notu halka açık olarak görüntüler.
     """
-    queryset = Note.objects.filter(is_public=True, is_deleted=False)
+    queryset = Note.objects.filter(is_shared=True, share_uuid__isnull=False)
     serializer_class = PublicNoteSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.AllowAny] # Herkes erişebilir
     lookup_field = 'share_uuid'
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
-    serializer_class = CategorySerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
-
-    def get_queryset(self):
-        return Category.objects.filter(owner=self.request.user).order_by("-id")
-
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
-
-
+# --- ÇÖP KUTUSU (Silinmiş Notlar) ---
 class TrashedNoteViewSet(viewsets.ModelViewSet):
-    """
-    Çöp kutusu işlemleri.
-    """
     serializer_class = NoteSerializer
     permission_classes = [permissions.IsAuthenticated]
-    http_method_names = ['get', 'post', 'delete', 'put', 'head', 'options']
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    search_fields = ['title', 'content']
-    ordering_fields = ['updated_at', 'title']
-    ordering = ['-updated_at']
 
     def get_queryset(self):
-        return Note.objects.filter(owner=self.request.user, is_deleted=True)
+        # Sadece silinmişleri getir
+        return Note.objects.filter(owner=self.request.user, is_deleted=True).order_by('-updated_at')
 
-    @action(detail=True, methods=['post'], url_path='restore')
+    # 1. GERİ YÜKLEME
+    @action(detail=True, methods=['post'])
     def restore(self, request, pk=None):
         note = self.get_object()
         note.is_deleted = False
         note.save()
-        return Response({'status': 'note restored'}, status=status.HTTP_200_OK)
+        return Response({'status': 'not geri yüklendi'})
 
+    # 2. ÇÖPÜ BOŞALT (Hepsini Kalıcı Sil)
     @action(detail=False, methods=['delete'], url_path='empty-all')
     def empty_all(self, request):
-        notes = self.get_queryset()
-        count = notes.count()
-        notes.delete() # Hard delete - Veritabanından siler
-        return Response({'status': f'{count} notes deleted permanently'}, status=status.HTTP_204_NO_CONTENT)
-
-    @action(detail=False, methods=['put'], url_path='restore-all')
-    def restore_all(self, request):
-        notes = self.get_queryset()
-        count = notes.update(is_deleted=False) 
-        return Response({'status': f'{count} notes restored'}, status=status.HTTP_200_OK)
-
-    def destroy(self, request, *args, **kwargs):
-        # Burası Çöp Kutusundan KALICI silme işlemi
-        note = self.get_object()
-        note.delete() 
+        Note.objects.filter(owner=request.user, is_deleted=True).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TagCloudView(APIView):
+# --- KATEGORİLER ---
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
-        user = request.user
+    def get_queryset(self):
+        return Category.objects.filter(owner=self.request.user)
 
-        if user.is_staff:
-            visible_notes = Note.objects.filter(is_deleted=False)
-        else:
-            visible_notes = Note.objects.filter(
-                Q(owner=user) | Q(is_public=True),
-                is_deleted=False 
-            ).distinct()
-
-        tags = Tag.objects.filter(
-            note__in=visible_notes
-        ).annotate(count=Count('note')).order_by('-count', 'name')
-        
-        top_tags = tags[:50]
-        tag_data = [{'name': tag.name, 'count': tag.count} for tag in top_tags if tag.count > 0]
-        
-        return Response(tag_data)
-
-
-class TrendingTagsView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        thirty_days_ago = timezone.now() - timedelta(days=30)
-
-        visible_notes = Note.objects.filter(
-            Q(owner=user) | Q(is_public=True),
-            created_at__gte=thirty_days_ago,
-            is_deleted=False
-        ).distinct()
-
-        trending_tags = Tag.objects.filter(
-            note__in=visible_notes
-        ).annotate(
-            count=Count('note')
-        ).order_by('-count', 'name')[:10]
-
-        serializer = TagSerializer(trending_tags, many=True, context={'request': request})
-        return Response(serializer.data) 
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)

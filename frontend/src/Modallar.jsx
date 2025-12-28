@@ -13,10 +13,6 @@ import {
   Switch,
   CircularProgress,
   Typography,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ShareIcon from '@mui/icons-material/Share';
@@ -34,20 +30,16 @@ const unescapeHtml = (html) => {
   return txt.value;
 };
 
-const EMPTY_NOTE = { title: "", content: "", is_private: false, tags: [], category: null };
+const EMPTY_NOTE = { title: "", content: "", is_private: false, tags: [] };
 
-const NoteModal = ({ isOpen, onClose, onSave, onShare, initialData, loading, title, categories }) => {
+const NoteModal = ({ isOpen, onClose, onSave, onShare, initialData, loading, title }) => {
   const [noteData, setNoteData] = useState(initialData);
 
   useEffect(() => {
     if (isOpen) {
-      // Düzenleme sırasında, initialData.category bir nesnedir. ID'sini almamız gerekir.
-      // Yeni not eklerken, initialData.category null'dır.
-      const categoryId = initialData.category?.id ?? null;
       setNoteData({ 
         ...initialData, 
         content: unescapeHtml(initialData.content || ''),
-        category: categoryId, // State'de sadece kategori ID'sini tut
       });
     }
   }, [isOpen, initialData]);
@@ -146,21 +138,6 @@ const NoteModal = ({ isOpen, onClose, onSave, onShare, initialData, loading, tit
               control={<Switch checked={noteData.is_private || false} onChange={handleChange} name="is_private" />}
               label={noteData.is_private ? '🔒 Gizli Not' : '🌐 Herkese Açık'}
             />
-            <FormControl variant="outlined" size="small" sx={{ minWidth: 150 }}>
-              <InputLabel id="category-select-label">Kategori</InputLabel>
-              <Select
-                  labelId="category-select-label"
-                  name="category"
-                  value={noteData.category || ''}
-                  onChange={handleChange}
-                  label="Kategori"
-              >
-                  <MenuItem value=""><em>Kategorisiz</em></MenuItem>
-                  {categories?.map(cat => (
-                      <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
           </Stack>
           <Stack direction="row" spacing={1} sx={{ ml: 'auto' }}>
             {initialData.id && (
@@ -183,19 +160,18 @@ const NoteModal = ({ isOpen, onClose, onSave, onShare, initialData, loading, tit
   );
 };
 
-export const AddNoteModal = ({ isOpen, onClose, onAdd, loading, categories }) => (
+export const AddNoteModal = ({ isOpen, onClose, onAdd, loading }) => (
   <NoteModal
     isOpen={isOpen}
     onClose={onClose}
     onSave={onAdd}
     initialData={EMPTY_NOTE}
     loading={loading}
-    categories={categories}
     title="Yeni Not Oluştur"
   />
 );
 
-export const EditNoteModal = ({ isOpen, onClose, onSave, onShare, loading, note, categories }) => {
+export const EditNoteModal = ({ isOpen, onClose, onSave, onShare, loading, note }) => {
   if (!note) return null;
   return (
     <NoteModal
@@ -203,7 +179,6 @@ export const EditNoteModal = ({ isOpen, onClose, onSave, onShare, loading, note,
       onClose={onClose}
       onSave={onSave}
       onShare={onShare}
-      categories={categories}
       initialData={note}
       loading={loading}
       title="Notu Düzenle"

@@ -13,9 +13,10 @@ class NoteFilter(filters.FilterSet):
     Note modeli için filtre seti.
     """
     tags = CharInFilter(field_name='tags__name', lookup_expr='in')
-
-    category = filters.CharFilter(field_name='category__name', lookup_expr='icontains')
+    is_public = filters.BooleanFilter(field_name='is_shared') # Modeldeki alan adı is_shared
 
     class Meta:
         model = Note
-        fields = ['tags', 'category', 'is_public']
+        # 'is_public' alanını yukarıda özel olarak tanımladığımız için
+        # Meta.fields içinde sadece 'tags' bırakmak yeterlidir.
+        fields = ['tags']
